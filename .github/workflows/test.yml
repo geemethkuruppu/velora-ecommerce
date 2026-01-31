@@ -1,0 +1,7 @@
+name: Test Actions
+on: [push]
+jobs:
+  test-job:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "GitHub Actions is working!"
