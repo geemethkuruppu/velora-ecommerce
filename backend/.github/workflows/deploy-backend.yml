@@ -1,0 +1,180 @@
+name: Deploy Backend Services
+
+on:
+  push:
+    branches: [ "main", "master" ]
+    paths:
+      - '**' # Trigger on any change in the repo
+
+env:
+  AWS_REGION: ap-south-1
+  ECR_REPOSITORY_PREFIX: 475583545270.dkr.ecr.ap-south-1.amazonaws.com
+  ECS_CLUSTER: velora-backend-cluster-v2
+
+permissions:
+  contents: read
+
+jobs:
+  # AUTH SERVICE
+  auth-service:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: dorny/paths-filter@v2
+      id: changes
+      with:
+        filters: |
+          src:
+            - 'auth-service/**'
+    
+    - name: Configure AWS credentials
+      if: steps.changes.outputs.src == 'true'
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Login to Amazon ECR
+      if: steps.changes.outputs.src == 'true'
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Build, tag, and push image to Amazon ECR
+      if: steps.changes.outputs.src == 'true'
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: velora-auth-service
+        IMAGE_TAG: latest
+      run: |
+        cd auth-service
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+    - name: Update ECS Service
+      if: steps.changes.outputs.src == 'true'
+      run: |
+        aws ecs update-service --cluster ${{ env.ECS_CLUSTER }} --service velora-auth-service --force-new-deployment
+
+  # ORDER SERVICE
+  order-service:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: dorny/paths-filter@v2
+      id: changes
+      with:
+        filters: |
+          src:
+            - 'order-service/**'
+    
+    - name: Configure AWS credentials
+      if: steps.changes.outputs.src == 'true'
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Login to Amazon ECR
+      if: steps.changes.outputs.src == 'true'
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Build, tag, and push image to Amazon ECR
+      if: steps.changes.outputs.src == 'true'
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: velora-order-service
+        IMAGE_TAG: latest
+      run: |
+        cd order-service
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+    - name: Update ECS Service
+      if: steps.changes.outputs.src == 'true'
+      run: |
+        aws ecs update-service --cluster ${{ env.ECS_CLUSTER }} --service velora-order-service --force-new-deployment
+
+  # PRODUCT SERVICE
+  product-service:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: dorny/paths-filter@v2
+      id: changes
+      with:
+        filters: |
+          src:
+            - 'product-service/**'
+    
+    - name: Configure AWS credentials
+      if: steps.changes.outputs.src == 'true'
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Login to Amazon ECR
+      if: steps.changes.outputs.src == 'true'
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Build, tag, and push image to Amazon ECR
+      if: steps.changes.outputs.src == 'true'
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: velora-product-service
+        IMAGE_TAG: latest
+      run: |
+        cd product-service
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+    - name: Update ECS Service
+      if: steps.changes.outputs.src == 'true'
+      run: |
+        aws ecs update-service --cluster ${{ env.ECS_CLUSTER }} --service velora-product-service --force-new-deployment
+
+  # INVENTORY SERVICE
+  inventory-service:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: dorny/paths-filter@v2
+      id: changes
+      with:
+        filters: |
+          src:
+            - 'inventory-service/**'
+    
+    - name: Configure AWS credentials
+      if: steps.changes.outputs.src == 'true'
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Login to Amazon ECR
+      if: steps.changes.outputs.src == 'true'
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Build, tag, and push image to Amazon ECR
+      if: steps.changes.outputs.src == 'true'
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: velora-inventory-service
+        IMAGE_TAG: latest
+      run: |
+        cd inventory-service
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+    - name: Update ECS Service
+      if: steps.changes.outputs.src == 'true'
+      run: |
+        aws ecs update-service --cluster ${{ env.ECS_CLUSTER }} --service velora-inventory-service --force-new-deployment
