@@ -2,7 +2,7 @@ name: Deploy Backend Services
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: [ "main", "master", "dev" ]
     paths:
       - 'backend/**'
 
@@ -15,23 +15,6 @@ permissions:
   contents: read
 
 jobs:
-  deploy-auth:
-    name: Deploy Auth Service
-    runs-on: ubuntu-latest
-    if: false # disable until backend structure confirmed matching paths, wait, paths filter on push handles this roughly, but explicit if is better for monorepo. Using paths-filter is better. 
-    # Actually, simpler is just using on.push.paths for the whole workflow, but that triggers all.
-    # Standard pattern:
-    steps:
-      - uses: actions/checkout@v4
-      
-      # We need to check if specific paths changed to avoid rebuilding everything every time?
-      # For simplicity in this first version, we'll use a specific job for each service and path triggers.
-      # BUT 'on.push.paths' is OR logic for the whole workflow. 
-      # To do per-job filtering, we can use https://github.com/dorny/paths-filter 
-    
-    # Let's simplify: 4 separate workflows? No, one file is cleaner.
-    # We will use dorny/paths-filter.
-
   # AUTH SERVICE
   auth-service:
     runs-on: ubuntu-latest
