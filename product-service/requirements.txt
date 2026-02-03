@@ -1,9 +1,0 @@
-fastapi
-uvicorn
-python-dotenv
-pydantic-settings
-sqlalchemy
-psycopg2-binary
-python-jose[cryptography]
-httpx
-python-multipart
