@@ -9,7 +9,7 @@ on:
 env:
   AWS_REGION: ap-south-1
   S3_BUCKET: velora-customer-app
-  # CLOUDFRONT_DISTA_ID: YOUR_DISTRIBUTION_ID (Fill this after creating CloudFront)
+  CLOUDFRONT_DISTA_ID: E1POIWCKTTA9N5
 
 permissions:
   id-token: write
@@ -56,6 +56,6 @@ jobs:
       run: |
         aws s3 sync customer/dist s3://${{ env.S3_BUCKET }} --delete
 
-    # - name: Invalidate CloudFront Cache
-    #   run: |
-    #     aws cloudfront create-invalidation --distribution-id ${{ env.CLOUDFRONT_DISTA_ID }} --paths "/*"
+    - name: Invalidate CloudFront Cache
+      run: |
+        aws cloudfront create-invalidation --distribution-id ${{ env.CLOUDFRONT_DISTA_ID }} --paths "/*"
