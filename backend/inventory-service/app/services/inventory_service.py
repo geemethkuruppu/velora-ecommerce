@@ -7,6 +7,9 @@ import uuid
 from typing import Optional
 from app.services.notification_service import send_low_stock_alert
 import asyncio
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 # ============ Inventory Management ============
@@ -149,22 +152,34 @@ def cleanup_inventory(db: Session, variant_ids: list[int]) -> dict:
 def reserve_stock(db: Session, order_id: uuid.UUID, variant_id: int, quantity: int) -> InventoryReservation:
     """
     Reserve stock for an order (Saga pattern - Step 1).
-    Creates ACTIVE reservation and increments reserved_quantity.
+    IDempotent: If a reservation for this order/variant already exists, 
+    return it rather than creating a duplicate.
     """
+    # 1. Check for existing reservation (Idempotency check)
+    existing_reservation = db.query(InventoryReservation).filter(
+        InventoryReservation.order_id == order_id,
+        InventoryReservation.variant_id == variant_id,
+        InventoryReservation.status == "ACTIVE"
+    ).first()
+
+    if existing_reservation:
+        logger.info(f"Duplicate reservation request for order {order_id} and variant {variant_id}. Returning existing.")
+        return existing_reservation
+
     inventory = get_inventory(db, variant_id)
     
-    # Check availability
+    # 2. Check availability
     if inventory.available_quantity < quantity:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Insufficient stock. Available: {inventory.available_quantity}, Requested: {quantity}"
         )
     
-    # Update inventory
+    # 3. Update inventory
     inventory.reserved_quantity += quantity
     inventory.available_quantity -= quantity
     
-    # Create reservation
+    # 4. Create reservation
     reservation = InventoryReservation(
         order_id=order_id,
         variant_id=variant_id,

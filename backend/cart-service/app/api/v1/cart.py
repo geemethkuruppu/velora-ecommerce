@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Request
 from sqlalchemy.orm import Session
 from typing import List
 
@@ -9,6 +9,7 @@ from app.schemas.cart import (
     CartItemUpdate, MessageResponse, MergeCartRequest, MergeCartResponse
 )
 from app.services import cart_service
+from app.core.limiter import limiter
 
 router = APIRouter(prefix="/cart", tags=["cart"])
 
@@ -23,7 +24,9 @@ async def get_cart(
 
 
 @router.post("/items", response_model=CartItemResponse, status_code=status.HTTP_201_CREATED)
+@limiter.limit("30/minute")
 async def add_to_cart(
+    request: Request,
     item: CartItemCreate,
     user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db)
@@ -67,7 +70,9 @@ def clear_cart(
 
 
 @router.post("/merge", response_model=MergeCartResponse)
+@limiter.limit("10/minute")
 async def merge_guest_cart(
+    request: Request,
     merge_data: MergeCartRequest,
     user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db)

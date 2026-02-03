@@ -23,7 +23,7 @@ const Products = () => {
     const [activeTab, setActiveTab] = useState('general'); // general, variants, media, specs
 
     // Category Form State
-    const [categoryData, setCategoryData] = useState({ name: '', slug: '', department: 'Others' });
+    const [categoryData, setCategoryData] = useState({ name: '', slug: '', department: 'Others', image_url: '' });
 
     // Type Form State
     const [typeData, setTypeData] = useState({ name: '', slug: '', category_id: '' });
@@ -73,7 +73,7 @@ const Products = () => {
         try {
             setLoading(true);
             const data = await productService.getAll();
-            setProducts(data);
+            setProducts(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error('Error fetching products:', error);
         } finally {
@@ -84,7 +84,7 @@ const Products = () => {
     const fetchCategories = async () => {
         try {
             const data = await productService.getCategories();
-            setCategories(data);
+            setCategories(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error('Error fetching categories:', error);
         }
@@ -93,7 +93,7 @@ const Products = () => {
     const fetchTypes = async () => {
         try {
             const data = await productService.getTypes();
-            setTypes(data);
+            setTypes(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error('Error fetching types:', error);
         }
@@ -213,7 +213,7 @@ const Products = () => {
             setSuccessTitle('Category Created');
             setSuccessMsg(`Category "${categoryData.name}" has been added.`);
             setIsCategoryManagementOpen(false);
-            setCategoryData({ name: '', slug: '', department: 'Others' });
+            setCategoryData({ name: '', slug: '', department: 'Others', image_url: '' });
             setShowSuccess(true);
             fetchCategories();
         } catch (error) {

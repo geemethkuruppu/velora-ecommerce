@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from app.db.deps import get_db
 from app.api.deps import require_admin
@@ -33,6 +33,7 @@ from app.services.inventory_service import (
     get_product_stock_sum
 )
 import uuid
+from app.core.limiter import limiter
 
 
 router = APIRouter(prefix="/inventory", tags=["Inventory"])
@@ -41,7 +42,8 @@ router = APIRouter(prefix="/inventory", tags=["Inventory"])
 # ============ Inventory Management Endpoints ============
 
 @router.get("/variant/{variant_id}", response_model=InventoryResponse)
-def get_inventory_status(variant_id: int, db: Session = Depends(get_db)):
+@limiter.limit("100/minute")
+def get_inventory_status(request: Request, variant_id: int, db: Session = Depends(get_db)):
     """
     Get current inventory status for a product variant.
     Returns total, reserved, and available quantities.
@@ -104,7 +106,9 @@ def update_stock_inventory(
 # ============ Reservation Endpoints (Saga Pattern) ============
 
 @router.post("/reserve", response_model=ReservationResponse)
+@limiter.limit("20/minute")
 def reserve_inventory(
+    request: Request,
     payload: ReserveStockRequest,
     db: Session = Depends(get_db)
 ):

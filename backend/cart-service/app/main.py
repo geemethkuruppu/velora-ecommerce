@@ -3,18 +3,31 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.db.session import engine
 from app.db.base import Base
 from app.api.v1.cart import router as cart_router
+from app.core.config import settings
+from slowapi.errors import RateLimitExceeded
+from slowapi import _rate_limit_exceeded_handler
+from app.core.limiter import limiter
+from app.core.logging_utils import setup_logging, CorrelationIdMiddleware
+from app.core.security_utils import SecurityHeadersMiddleware
 
 app = FastAPI(title="Cart Service")
+
+# Setup Structured Logging
+setup_logging(settings.app_name)
+
+# Add Correlation ID Middleware
+app.add_middleware(CorrelationIdMiddleware)
+
+# Add Security Headers Middleware
+app.add_middleware(SecurityHeadersMiddleware)
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # CORS Middleware configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:5174",
-        "http://127.0.0.1:5174",
-    ],
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

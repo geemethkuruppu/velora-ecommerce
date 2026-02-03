@@ -8,3 +8,4 @@ httpx
 alembic
 python-jose[cryptography]
 requests
+slowapi

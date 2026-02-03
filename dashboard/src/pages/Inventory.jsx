@@ -32,7 +32,7 @@ const Inventory = () => {
         try {
             setLoading(true);
             const data = await InventoryService.getInventory(filterLowStock);
-            setInventory(data);
+            setInventory(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error("Failed to fetch inventory", error);
         } finally {
@@ -52,7 +52,7 @@ const Inventory = () => {
     const fetchEvents = async () => {
         try {
             const data = await InventoryService.getEvents();
-            setEvents(data.slice(0, 8)); // Only show top 8 in Sidebar
+            setEvents(Array.isArray(data) ? data.slice(0, 8) : []); // Only show top 8 in Sidebar
         } catch (error) {
             console.error("Failed to fetch events", error);
         }
@@ -61,7 +61,7 @@ const Inventory = () => {
     const handleShowReservations = async () => {
         try {
             const data = await InventoryService.getReservations();
-            setReservations(data);
+            setReservations(Array.isArray(data) ? data : []);
             setShowReservations(true);
         } catch (error) {
             console.error("Failed to fetch reservations", error);

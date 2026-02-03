@@ -1,5 +1,6 @@
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from typing import Optional, List, Literal
+from app.core.utils import sanitize_string
 from decimal import Decimal
 from datetime import datetime
 
@@ -9,7 +10,13 @@ class CategoryBase(BaseModel):
     name: str
     slug: str
     department: Literal["Womenswear", "Menswear", "Kidswear", "Others"] = "Others"
+    image_url: Optional[str] = None
     is_active: bool = True
+
+    @field_validator("name", "slug")
+    @classmethod
+    def sanitize_cat(cls, v: str) -> str:
+        return sanitize_string(v)
 
 class CategoryCreate(CategoryBase):
     pass
@@ -29,6 +36,11 @@ class TypeBase(BaseModel):
     slug: str
     category_id: int
     is_active: bool = True
+
+    @field_validator("name", "slug")
+    @classmethod
+    def sanitize_type(cls, v: str) -> str:
+        return sanitize_string(v)
 
 class TypeCreate(TypeBase):
     pass
@@ -88,6 +100,11 @@ class SpecificationBase(BaseModel):
     spec_key: str
     spec_value: str
 
+    @field_validator("spec_key", "spec_value")
+    @classmethod
+    def sanitize(cls, v: str) -> str:
+        return sanitize_string(v)
+
 class SpecificationCreate(SpecificationBase):
     pass
 
@@ -113,6 +130,11 @@ class ProductBase(BaseModel):
     type_id: int
     is_active: bool = True
 
+    @field_validator("name", "slug", "brand", "tags", "short_description", "description")
+    @classmethod
+    def sanitize(cls, v: str) -> str:
+        return sanitize_string(v)
+
 class ProductCreate(ProductBase):
     variants: Optional[List[VariantCreate]] = []
     specifications: Optional[List[SpecificationCreate]] = []
@@ -126,6 +148,11 @@ class ProductUpdate(BaseModel):
     base_price: Optional[Decimal] = None
     type_id: Optional[int] = None
     is_active: Optional[bool] = None
+
+    @field_validator("name", "slug", "short_description", "description")
+    @classmethod
+    def sanitize(cls, v: str) -> str:
+        return sanitize_string(v)
     variants: Optional[List[VariantCreate]] = None
     specifications: Optional[List[SpecificationCreate]] = None
     media: Optional[List[MediaCreate]] = None

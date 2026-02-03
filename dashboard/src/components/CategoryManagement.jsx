@@ -1,5 +1,6 @@
-import React from 'react';
-import { X, Tag, Plus, Trash2 } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { X, Tag, Plus, Trash2, Upload, ImageIcon, Loader2 } from 'lucide-react';
+import { productService } from '../services/productService';
 
 const CategoryManagement = ({
     isOpen,
@@ -10,11 +11,30 @@ const CategoryManagement = ({
     onAddCategory,
     onDeleteCategory
 }) => {
+    const fileInputRef = useRef(null);
+    const [uploading, setUploading] = useState(false);
+
     if (!isOpen) return null;
+
+    const handleFileChange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        try {
+            setUploading(true);
+            const response = await productService.uploadMedia(file);
+            setCategoryData({ ...categoryData, image_url: response.url });
+        } catch (error) {
+            console.error('Error uploading category image:', error);
+            alert('Failed to upload image. Please try again.');
+        } finally {
+            setUploading(false);
+        }
+    };
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col animate-in zoom-in-95 duration-200">
+            <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-200">
                 {/* Header */}
                 <div className="flex items-center justify-between p-8 border-b border-gray-100">
                     <div>
@@ -34,44 +54,85 @@ const CategoryManagement = ({
                     {/* Add Category Section */}
                     <div className="mb-8 p-6 bg-white rounded-2xl border border-gray-200 shadow-sm">
                         <h3 className="text-sm font-bold text-primary mb-4 uppercase tracking-wider">Add New Category</h3>
-                        <div className="grid grid-cols-3 gap-4">
-                            <div>
-                                <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-2">Category Name</label>
-                                <input
-                                    type="text"
-                                    value={categoryData.name}
-                                    onChange={(e) => setCategoryData({ ...categoryData, name: e.target.value })}
-                                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-primary/50 transition-colors text-sm"
-                                    placeholder="e.g., Luxury Watches"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-2">Slug</label>
-                                <input
-                                    type="text"
-                                    value={categoryData.slug}
-                                    onChange={(e) => setCategoryData({ ...categoryData, slug: e.target.value })}
-                                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-primary/50 transition-colors text-sm"
-                                    placeholder="e.g., luxury-watches"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-2">Department</label>
-                                <select
-                                    value={categoryData.department}
-                                    onChange={(e) => setCategoryData({ ...categoryData, department: e.target.value })}
-                                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-primary/50 transition-colors text-sm appearance-none bg-white"
+
+                        <div className="flex gap-6 mb-6">
+                            {/* Image Upload Area */}
+                            <div className="w-32 h-32 flex-shrink-0">
+                                <label className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-2">Image</label>
+                                <div
+                                    onClick={() => !uploading && fileInputRef.current?.click()}
+                                    className={`w-full h-full rounded-2xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all overflow-hidden relative group ${categoryData.image_url ? 'border-primary/20 bg-gray-50' : 'border-gray-200 hover:border-primary/40 bg-gray-50/50'
+                                        }`}
                                 >
-                                    <option value="Womenswear">Womenswear</option>
-                                    <option value="Menswear">Menswear</option>
-                                    <option value="Kidswear">Kidswear</option>
-                                    <option value="Others">Others</option>
-                                </select>
+                                    {uploading ? (
+                                        <Loader2 className="animate-spin text-primary" size={24} />
+                                    ) : categoryData.image_url ? (
+                                        <>
+                                            <img src={categoryData.image_url} alt="Preview" className="w-full h-full object-cover" />
+                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white text-[10px] font-bold uppercase tracking-widest">
+                                                Change
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Upload className="text-text-muted mb-1" size={20} />
+                                            <span className="text-[9px] font-bold text-text-muted uppercase tracking-tighter">Upload</span>
+                                        </>
+                                    )}
+                                    <input
+                                        type="file"
+                                        ref={fileInputRef}
+                                        className="hidden"
+                                        accept="image/*"
+                                        onChange={handleFileChange}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex-1 space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-2">Category Name</label>
+                                        <input
+                                            type="text"
+                                            value={categoryData.name}
+                                            onChange={(e) => setCategoryData({ ...categoryData, name: e.target.value })}
+                                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-primary/50 transition-colors text-sm"
+                                            placeholder="e.g., Luxury Watches"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-2">Slug</label>
+                                        <input
+                                            type="text"
+                                            value={categoryData.slug}
+                                            onChange={(e) => setCategoryData({ ...categoryData, slug: e.target.value })}
+                                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-primary/50 transition-colors text-sm"
+                                            placeholder="e.g., luxury-watches"
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-2">Department</label>
+                                    <select
+                                        value={categoryData.department}
+                                        onChange={(e) => setCategoryData({ ...categoryData, department: e.target.value })}
+                                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-primary/50 transition-colors text-sm appearance-none bg-white"
+                                    >
+                                        <option value="Womenswear">Womenswear</option>
+                                        <option value="Menswear">Menswear</option>
+                                        <option value="Kidswear">Kidswear</option>
+                                        <option value="Others">Others</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
+
                         <button
                             onClick={onAddCategory}
-                            className="mt-4 w-full py-3 bg-primary text-white rounded-xl font-bold text-sm uppercase tracking-widest hover:bg-primary/90 transition-all"
+                            disabled={uploading || !categoryData.name || !categoryData.slug}
+                            className={`w-full py-3 bg-primary text-white rounded-xl font-bold text-sm uppercase tracking-widest transition-all ${uploading || !categoryData.name || !categoryData.slug ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary/90 hover:shadow-lg active:scale-[0.98]'
+                                }`}
                         >
                             <Plus size={16} className="inline mr-2" />
                             Add Category
@@ -94,8 +155,12 @@ const CategoryManagement = ({
                                         className="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-xl hover:border-primary/20 transition-all group"
                                     >
                                         <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                                <Tag size={18} className="text-primary" />
+                                            <div className="w-12 h-12 rounded-xl bg-primary/10 overflow-hidden flex items-center justify-center">
+                                                {category.image_url ? (
+                                                    <img src={category.image_url} alt={category.name} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <Tag size={18} className="text-primary" />
+                                                )}
                                             </div>
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-2">

@@ -3,23 +3,35 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.db.base import Base
 from app.db.session import engine
+from app.models.user import User
+from slowapi.errors import RateLimitExceeded
+from slowapi import _rate_limit_exceeded_handler
+from app.core.limiter import limiter
 from app.api.v1.auth import router as auth_router
-from app.models.user import User 
+from app.core.logging_utils import setup_logging, CorrelationIdMiddleware
+from app.core.security_utils import SecurityHeadersMiddleware
 
 app = FastAPI(
     title=settings.app_name,
     version="1.0.0"
 )
 
-# CORS Middleware configuration
+# Setup Structured Logging
+setup_logging(settings.app_name)
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# Add Correlation ID Middleware
+app.add_middleware(CorrelationIdMiddleware)
+
+# Add Security Headers Middleware
+app.add_middleware(SecurityHeadersMiddleware)
+
+# CORS Middleware configuration - Add LAST to be outermost
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:5174",
-        "http://127.0.0.1:5174",
-    ],
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

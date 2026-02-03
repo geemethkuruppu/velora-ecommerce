@@ -22,6 +22,18 @@ class Settings(BaseSettings):
     db_user: str
     db_password: str
     db_sslmode: str
+    db_pool_size: int = 20
+    db_max_overflow: int = 10
+    db_pool_timeout: int = 30
+    db_pool_recycle: int = 1800
+    
+    # CORS
+    cors_origins: list[str] = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5174",
+    ]
     
     # External Service URLs
     inventory_service_url: str = "http://localhost:8004/api/v1"

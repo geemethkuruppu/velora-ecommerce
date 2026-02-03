@@ -8,6 +8,7 @@ import CheckoutModal from '../components/CheckoutModal';
 import { ShoppingCart, Trash2, Plus, Minus, ArrowRight, Loader2 } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import Footer from '../components/Footer';
+import { formatImageUrl } from '../services/productService';
 
 const MyCart = () => {
     const { user } = useAuth();
@@ -123,7 +124,7 @@ const MyCart = () => {
                                         {/* Product Image */}
                                         <div className="w-32 h-32 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
                                             <img
-                                                src={item.product?.image || '/api/placeholder/150/150'}
+                                                src={formatImageUrl(item.product?.image || item.product?.image_url)}
                                                 alt={item.product?.name || 'Product'}
                                                 className="w-full h-full object-cover"
                                             />
@@ -172,11 +173,11 @@ const MyCart = () => {
                                                 {/* Price */}
                                                 <div className="text-right">
                                                     <p className="text-lg font-medium text-gray-900">
-                                                        ${((item.product?.base_price || 0) * item.quantity).toFixed(2)}
+                                                        ${(Number(item.product?.base_price || 0) * item.quantity).toFixed(2)}
                                                     </p>
                                                     {item.quantity > 1 && (
                                                         <p className="text-sm text-gray-500">
-                                                            ${(item.product?.base_price || 0).toFixed(2)} each
+                                                            ${Number(item.product?.base_price || 0).toFixed(2)} each
                                                         </p>
                                                     )}
                                                 </div>
@@ -220,10 +221,20 @@ const MyCart = () => {
 
                                 <button
                                     onClick={() => setIsCheckoutOpen(true)}
-                                    className="w-full py-4 bg-gray-900 text-white rounded-sm hover:bg-black transition-colors uppercase tracking-wider text-sm flex items-center justify-center gap-2 mb-3"
+                                    disabled={loading || cartItems.length === 0}
+                                    className="w-full py-4 bg-gray-900 text-white rounded-sm hover:bg-black transition-colors uppercase tracking-wider text-sm flex items-center justify-center gap-2 mb-3 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    Proceed to Checkout
-                                    <ArrowRight className="w-4 h-4" />
+                                    {loading ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                            Updating Cart...
+                                        </>
+                                    ) : (
+                                        <>
+                                            Proceed to Checkout
+                                            <ArrowRight className="w-4 h-4" />
+                                        </>
+                                    )}
                                 </button>
 
                                 <button
@@ -256,6 +267,7 @@ const MyCart = () => {
             </div>
 
             <CheckoutModal
+                isOpen={isCheckoutOpen}
                 onClose={() => setIsCheckoutOpen(false)}
             />
             <Footer />

@@ -1,13 +1,32 @@
-import axios from 'axios';
+import api from './api';
 
 const API_URL = import.meta.env.VITE_PRODUCT_URL;
+const API_BASE = API_URL.split('/api/v1')[0];
+const IMAGE_BASE_URL = `${API_BASE}/uploads/`;
+
+export const formatImageUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith('http')) return url;
+
+    // Cleanup the URL: remove leading slash, remove leading 'uploads/' if present
+    let cleanUrl = url.startsWith('/') ? url.slice(1) : url;
+    if (cleanUrl.startsWith('uploads/')) {
+        cleanUrl = cleanUrl.replace('uploads/', '');
+    }
+
+    return `${IMAGE_BASE_URL}${cleanUrl}`;
+};
 
 const productService = {
     getCategories: async (department = null) => {
         try {
             const params = department ? { department } : {};
-            const response = await axios.get(`${API_URL}/categories`, { params });
-            return response.data;
+            const response = await api.get(`${API_URL}/categories`, { params });
+            // Format media_url/image for UI
+            return response.data.map(cat => ({
+                ...cat,
+                image: formatImageUrl(cat.image_url || cat.image)
+            }));
         } catch (error) {
             console.error('[ProductService] Failed to fetch categories:', error);
             throw error;
@@ -16,28 +35,16 @@ const productService = {
 
     getProducts: async (filters = {}) => {
         try {
-            const response = await axios.get(`${API_URL}`, { params: filters });
-
-            // Derive the base URL for uploads (e.g., http://localhost:8001/uploads/)
-            const API_BASE = API_URL.split('/api/v1')[0];
-            const IMAGE_BASE_URL = `${API_BASE}/uploads/`;
+            const response = await api.get(`${API_URL}`, { params: filters });
 
             // Transform backend ProductResponse to UI-friendly format
             return response.data.map(product => {
                 // Find primary media or take the first one
                 const primaryMedia = product.media?.find(m => m.is_primary) || product.media?.[0];
 
-                let imageUrl = 'https://images.unsplash.com/photo-1539109132314-34a9c655a8c8?q=80&w=2000&auto=format&fit=crop'; // Default elegant fallback
-
-                if (primaryMedia) {
-                    imageUrl = primaryMedia.media_url.startsWith('http')
-                        ? primaryMedia.media_url
-                        : `${IMAGE_BASE_URL}${primaryMedia.media_url}`;
-                }
-
                 return {
                     ...product,
-                    image: imageUrl,
+                    image: formatImageUrl(primaryMedia?.media_url),
                     price: `${product.currency === 'USD' ? '$' : product.currency + ' '}${parseFloat(product.base_price).toLocaleString()}`
                 };
             });

@@ -36,7 +36,11 @@ const OrderTable = () => {
         const fetchOrders = async () => {
             try {
                 const data = await OrderService.getAllOrders();
-                setOrders(data.slice(0, 6)); // Show latest 6
+                if (Array.isArray(data)) {
+                    setOrders(data.slice(0, 6));
+                } else {
+                    setOrders([]);
+                }
             } catch (error) {
                 console.error('Error fetching orders:', error);
             } finally {

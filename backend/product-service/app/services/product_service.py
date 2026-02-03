@@ -229,10 +229,10 @@ def get_product_stats(db: Session):
 
 
 # Category Services
-def create_category(db: Session, name: str, slug: str, department: str = "Others") -> Category:
+def create_category(db: Session, name: str, slug: str, department: str = "Others", image_url: str = None) -> Category:
     # DEBUG LOG
     with open("category_debug.log", "a") as f:
-        f.write(f"Creating category: name={name}, slug={slug}, department={department}\n")
+        f.write(f"Creating category: name={name}, slug={slug}, department={department}, image_url={image_url}\n")
     
     existing = db.query(Category).filter(Category.slug == slug).first()
     if existing:
@@ -241,7 +241,7 @@ def create_category(db: Session, name: str, slug: str, department: str = "Others
         raise HTTPException(status_code=400, detail="Category slug already exists")
     
     try:
-        category = Category(name=name, slug=slug, department=department)
+        category = Category(name=name, slug=slug, department=department, image_url=image_url)
         db.add(category)
         db.commit()
         db.refresh(category)

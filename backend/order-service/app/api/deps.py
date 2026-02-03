@@ -1,5 +1,5 @@
 from typing import Generator, Optional
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Cookie
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 from pydantic import ValidationError
@@ -12,12 +12,22 @@ from app.db.base import Base
 # For independent services, we just need to know where to validate or just decode if we share secret.
 # We are sharing SECRET_KEY (in .env).
 reusable_oauth2 = OAuth2PasswordBearer(
-    tokenUrl=f"http://localhost:8000/api/v1/auth/login" # Just for swagger UI hint
+    tokenUrl=f"http://localhost:8000/api/v1/auth/login", # Just for swagger UI hint
+    auto_error=False
 )
 
 def get_current_user(
-    token: str = Depends(reusable_oauth2)
+    token: Optional[str] = Depends(reusable_oauth2),
+    access_token: Optional[str] = Cookie(None)
 ) -> dict:
+    # Use cookie if header is missing
+    final_token = token or access_token
+    
+    if not final_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+        )
     """
     Decodes the JWT token and returns user info.
     Does NOT check DB for user existence (stateless check) to save DB calls,
@@ -26,7 +36,7 @@ def get_current_user(
     """
     try:
         payload = jwt.decode(
-            token, settings.secret_key, algorithms=[settings.algorithm]
+            final_token, settings.secret_key, algorithms=[settings.algorithm]
         )
         # Auth Service token likely has "sub" as user_id or email.
         # Let's assume standard "sub" is user_id string (or int converted to string).

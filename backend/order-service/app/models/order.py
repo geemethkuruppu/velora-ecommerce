@@ -34,7 +34,7 @@ class Order(Base):
 
     __table_args__ = (
         CheckConstraint(
-            "status IN ('PENDING', 'PENDING_INVENTORY', 'CONFIRMED', 'SHIPPED', 'DELIVERED', 'CANCELLED')",
+            "status IN ('PENDING', 'PENDING_INVENTORY', 'CONFIRMED', 'SHIPPED', 'DELIVERED', 'CANCELLED', 'CANCEL_PENDING')",
             name="check_order_status"
         ),
     )

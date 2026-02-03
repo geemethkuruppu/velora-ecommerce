@@ -7,5 +7,6 @@ psycopg2-binary
 httpx
 python-jose[cryptography]
 alembic
-httpx
 requests
+tenacity
+slowapi

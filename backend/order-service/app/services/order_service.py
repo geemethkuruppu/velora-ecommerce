@@ -77,12 +77,17 @@ class OrderService:
                     "sku": variant['sku']
                 })
         except Exception as e:
-            logger.error(f"Validation failed: {e}")
+            import traceback
+            error_trace = traceback.format_exc()
+            logger.error(f"Validation failed: {type(e).__name__}: {str(e)}")
+            logger.error(f"Traceback: {error_trace}")
+            
             if isinstance(e, HTTPException):
+                logger.error(f"HTTPException detail: {e.detail}")
                 raise e
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=str(e)
+                detail=str(e) or f"Validation failed: {type(e).__name__}"
             )
 
         # 3. Create Order in DB (Status: PENDING_INVENTORY)
@@ -151,27 +156,43 @@ class OrderService:
     async def get_user_orders(db: Session, user_id: int) -> List[Order]:
         orders = db.query(Order).filter(Order.user_id == user_id).order_by(Order.created_at.desc()).all()
         
-        # Enrich order items with product images
+        # Collect all unique product IDs across all orders
+        product_ids = set()
         for order in orders:
             for item in order.items:
-                try:
-                    # Fetch product details to get image
-                    product = await ProductClient.validate_product(item.product_id)
-                    if product and product.get('media'):
-                        # Get the primary image or first image
-                        primary_image = next((m for m in product['media'] if m.get('is_primary')), None)
-                        if not primary_image and product['media']:
-                            primary_image = product['media'][0]
-                        
-                        if primary_image:
-                            # Attach image_url to the item dynamically
-                            item.image_url = primary_image.get('media_url', '')
-                        else:
-                            item.image_url = None
-                    else:
-                        item.image_url = None
-                except Exception as e:
-                    logger.error(f"Failed to fetch image for product {item.product_id}: {e}")
+                product_ids.add(item.product_id)
+        
+        # Fetch all product details in parallel
+        async def fetch_product(pid):
+            try:
+                # Use validate_product as it already has retries and circuit breaker
+                return pid, await ProductClient.validate_product(pid)
+            except Exception as e:
+                logger.error(f"Error fetching product {pid} for order enrichment: {str(e)}")
+                return pid, None
+
+        tasks = [fetch_product(pid) for pid in product_ids]
+        if tasks:
+            product_results = await asyncio.gather(*tasks, return_exceptions=True)
+            # Filter out exceptions from results (they should have been caught but just in case)
+            product_map = {}
+            for res in product_results:
+                if isinstance(res, tuple) and len(res) == 2:
+                    pid, data = res
+                    product_map[pid] = data
+        else:
+            product_map = {}
+
+        # Enrich order items from the map
+        for order in orders:
+            for item in order.items:
+                product = product_map.get(item.product_id)
+                if product and product.get('media'):
+                    # Get primary or first image
+                    media_list = product['media']
+                    primary = next((m for m in media_list if m.get('is_primary')), media_list[0] if media_list else None)
+                    item.image_url = primary.get('media_url') if primary else None
+                else:
                     item.image_url = None
         
         # Add cancellation status to each order
@@ -223,15 +244,31 @@ class OrderService:
         if not can_cancel:
             raise HTTPException(status_code=400, detail=reason)
             
-        # Release Stock
+        # Phase 1: Move to CANCEL_PENDING
+        # This ensures that even if we crash mid-process, we know this order is in limbo.
+        order.status = "CANCEL_PENDING"
+        db.commit()
+        db.refresh(order)
+        logger.info(f"Order {order_id} marked as CANCEL_PENDING. Starting inventory release.")
+            
+        # Phase 2: Release Stock
         try:
+            # InventoryClient.release_stock already has 3 retries with exponential backoff
             success = await InventoryClient.release_stock(order_id)
             if not success:
-                logger.warning(f"Stock release failed for order {order_id}, but proceeding with cancellation")
+                logger.error(f"❌ Critical: Stock release failed for order {order_id} after all retries. Order remains in CANCEL_PENDING.")
+                raise HTTPException(
+                    status_code=503, 
+                    detail="Failed to release inventory stock. Please try again later. Your order is marked for cancellation."
+                )
         except Exception as e:
-            logger.error(f"Error releasing stock for order {order_id}: {e}")
-            # Continue with cancellation even if inventory release fails
+            logger.error(f"❌ Error during stock release for order {order_id}: {e}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"An unexpected error occurred during stock release: {str(e)}"
+            )
             
+        # Phase 3: Finalize Cancellation
         order.status = "CANCELLED"
         db.commit()
         db.refresh(order)
@@ -244,7 +281,7 @@ class OrderService:
         order = OrderService.get_order(db, order_id)
         
         # Validate status transition (simple check)
-        valid_statuses = ["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED", "CANCELLED"]
+        valid_statuses = ["PENDING", "PENDING_INVENTORY", "CONFIRMED", "SHIPPED", "DELIVERED", "CANCELLED", "CANCEL_PENDING"]
         if new_status not in valid_statuses:
              raise HTTPException(status_code=400, detail="Invalid status")
              

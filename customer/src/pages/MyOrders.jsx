@@ -7,9 +7,10 @@ import CancelOrderModal from '../components/CancelOrderModal';
 import { Package, Calendar, DollarSign, Truck, CheckCircle, Clock, XCircle, AlertCircle } from 'lucide-react';
 import Footer from '../components/Footer';
 import orderService from '../services/orderService';
+import { formatImageUrl } from '../services/productService';
 
 const MyOrders = () => {
-    const { user, token } = useAuth();
+    const { user, loading: authLoading } = useAuth();
     const navigate = useNavigate();
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -18,29 +19,33 @@ const MyOrders = () => {
     const [cancelling, setCancelling] = useState(false);
     const [toast, setToast] = useState({ show: false, message: '', type: '' });
 
-    // Redirect if not authenticated
+    // 1. Redirect if not authenticated (using auth loading)
     useEffect(() => {
-        if (!user) {
+        if (!authLoading && !user) {
             navigate('/login');
-            return;
         }
+    }, [user, authLoading, navigate]);
 
-        const fetchOrders = async () => {
-            try {
-                setLoading(true);
-                const data = await orderService.getUserOrders(token);
-                // Sort by date newest first
-                const sortedOrders = data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-                setOrders(sortedOrders);
-            } catch (error) {
-                console.error('Failed to fetch orders:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
+    // 2. Fetch orders if authenticated
+    useEffect(() => {
+        if (user) {
+            const fetchOrders = async () => {
+                try {
+                    setLoading(true);
+                    const data = await orderService.getUserOrders();
+                    // Sort by date newest first
+                    const sortedOrders = data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                    setOrders(sortedOrders);
+                } catch (error) {
+                    console.error('Failed to fetch orders:', error);
+                } finally {
+                    setLoading(false);
+                }
+            };
 
-        fetchOrders();
-    }, [user, token, navigate]);
+            fetchOrders();
+        }
+    }, [user?.email]); // Anchor to email to prevent referential identity loops
 
     const showToast = (message, type = 'success') => {
         setToast({ show: true, message, type });
@@ -57,7 +62,7 @@ const MyOrders = () => {
 
         try {
             setCancelling(true);
-            await orderService.cancelOrder(token, selectedOrder.id);
+            await orderService.cancelOrder(selectedOrder.id);
 
             // Update local state
             setOrders(orders.map(order =>
@@ -167,7 +172,7 @@ const MyOrders = () => {
                                         </div>
                                         <div className="flex items-center gap-2 text-gray-900 font-medium">
                                             <DollarSign className="w-4 h-4" />
-                                            ${parseFloat(order.total_amount).toFixed(2)}
+                                            ${Number(order.total_amount || 0).toFixed(2)}
                                         </div>
                                     </div>
                                 </div>
@@ -178,7 +183,7 @@ const MyOrders = () => {
                                             <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
                                                 {item.image_url ? (
                                                     <img
-                                                        src={item.image_url}
+                                                        src={formatImageUrl(item.image_url)}
                                                         alt={item.product_name}
                                                         className="w-full h-full object-cover"
                                                     />
@@ -192,7 +197,7 @@ const MyOrders = () => {
                                                 <p className="text-sm text-gray-500">Quantity: {item.quantity}</p>
                                             </div>
                                             <div className="text-gray-900 font-medium">
-                                                ${parseFloat(item.price).toFixed(2)}
+                                                ${Number(item.price || 0).toFixed(2)}
                                             </div>
                                         </div>
                                     ))}

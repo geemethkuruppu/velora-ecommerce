@@ -1,6 +1,11 @@
-Creating category: name=Watches, slug=mens-watches, department=Menswear
-Creating category: name=Accessories, slug=men-accessories, department=Menswear
-Creating category: name=Bags, slug=men-bags, department=Menswear
-Creating category: name=Boys Clothing, slug=boys-clothing, department=Kidswear
-Creating category: name=Girls Clothing, slug=girls-clothing, department=Kidswear
-Creating category: name=Travel, slug=travel, department=Others
+Creating category: name=Shoes, slug=women-shoes, department=Womenswear, image_url=None
+Creating category: name=Clothing, slug=women-clothing, department=Womenswear, image_url=None
+Creating category: name=Handbags, slug=women-handbags, department=Womenswear, image_url=http://localhost:8001/uploads/products/a3e7535e-0535-493c-836e-f2bf3ebed7bb.png
+Creating category: name=Shoes, slug=women-Shoes, department=Womenswear, image_url=http://localhost:8001/uploads/products/feffd445-214a-4278-a514-33b88a791f56.png
+Creating category: name=Clothing, slug=women-clothing, department=Womenswear, image_url=http://localhost:8001/uploads/products/1991c155-6e7b-4695-a955-151d0a9d2e73.png
+Creating category: name=Jewellery, slug=women-jewellery, department=Womenswear, image_url=http://localhost:8001/uploads/products/e944cfb4-ddaa-494e-b90e-37f9eb152f1f.png
+Creating category: name=Watches, slug=women-watches, department=Womenswear, image_url=http://localhost:8001/uploads/products/ca9c5f92-8466-42ca-a4fa-89ab0129e2b3.jpg
+Creating category: name=Watches, slug=men-watches, department=Menswear, image_url=http://localhost:8001/uploads/products/04366f9e-0665-4de1-a5af-cdc320b90513.jpg
+Creating category: name=Shoes, slug=men-shoes, department=Menswear, image_url=http://localhost:8001/uploads/products/6c398de0-51a1-4979-a550-f45939593995.jpg
+Creating category: name=Clothing, slug=men-clothing, department=Menswear, image_url=http://localhost:8001/uploads/products/1eb7368f-6bed-417e-a95a-ba70db70fb43.jpg
+Creating category: name=Accessories, slug=men-accessories, department=Menswear, image_url=http://localhost:8001/uploads/products/57001335-6fde-4323-94f9-91e28045a3f5.jpg

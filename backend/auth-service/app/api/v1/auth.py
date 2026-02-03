@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response, Cookie, Request
 from sqlalchemy.orm import Session
+from app.core.config import settings
 from app.schemas.user import (
     UserCreate,
     UserResponse,
@@ -26,6 +27,7 @@ from app.services.auth_service import (
 from app.db.deps import get_db
 from app.api.deps import require_admin, get_current_user
 from app.models.user import User
+from app.core.limiter import limiter
 
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
@@ -36,7 +38,8 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
     response_model=UserResponse,
     status_code=status.HTTP_201_CREATED
 )
-def register(user_in: UserCreate, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def register(request: Request, user_in: UserCreate, db: Session = Depends(get_db)):
     try:
         user = create_user(db, user_in)
         return user
@@ -48,13 +51,38 @@ def register(user_in: UserCreate, db: Session = Depends(get_db)):
 
 
 @router.post("/login", response_model=TokenResponse)
-def login(payload: UserLogin, db: Session = Depends(get_db)):
+@limiter.limit("10/minute")
+def login(request: Request, payload: UserLogin, response: Response, db: Session = Depends(get_db)):
     if len(payload.password.encode("utf-8")) > 72:
         raise HTTPException(
             status_code=400,
             detail="Password is too long"
         )
-    return login_user(db, payload.email, payload.password)
+    
+    result = login_user(db, payload.email, payload.password)
+    
+    # Set HttpOnly cookies
+    response.set_cookie(
+        key="access_token",
+        value=result["access_token"],
+        httponly=True,
+        max_age=settings.access_token_expire_minutes * 60,
+        expires=settings.access_token_expire_minutes * 60,
+        samesite="lax",
+        secure=False, # Set to True in production with HTTPS
+    )
+    
+    response.set_cookie(
+        key="refresh_token",
+        value=result["refresh_token"],
+        httponly=True,
+        max_age=settings.refresh_token_expire_days * 24 * 60 * 60,
+        expires=settings.refresh_token_expire_days * 24 * 60 * 60,
+        samesite="lax",
+        secure=False, # Set to True in production with HTTPS
+    )
+    
+    return result
 
 @router.post("/register-admin", response_model=UserResponse)
 def register_admin(
@@ -223,3 +251,73 @@ def change_password(
             detail="New passwords do not match"
         )
     return update_password(db, current_user, payload.current_password, payload.new_password)
+
+@router.post("/refresh", response_model=TokenResponse)
+def refresh_token(
+    response: Response,
+    refresh_token: str = Cookie(None),
+    db: Session = Depends(get_db)
+):
+    if not refresh_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token missing"
+        )
+        
+    from app.core.security import decode_refresh_token, create_access_token
+    payload = decode_refresh_token(refresh_token)
+    
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired refresh token"
+        )
+        
+    user_id = payload.get("sub")
+    user = db.query(User).filter(User.id == int(user_id)).first()
+    
+    if not user or not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found or inactive"
+        )
+        
+    # Issue new access token
+    new_access_token = create_access_token(
+        data={
+            "sub": str(user.id),
+            "role": user.role
+        }
+    )
+    
+    # Update cookie
+    response.set_cookie(
+        key="access_token",
+        value=new_access_token,
+        httponly=True,
+        max_age=settings.access_token_expire_minutes * 60,
+        expires=settings.access_token_expire_minutes * 60,
+        samesite="lax",
+        secure=False,
+    )
+    
+    return {
+        "access_token": new_access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer",
+        "expires_in": settings.access_token_expire_minutes * 60,
+        "user": {
+            "id": user.id,
+            "email": user.email,
+            "full_name": user.full_name,
+            "role": user.role,
+            "is_active": user.is_active,
+            "is_verified": user.is_verified
+        }
+    }
+
+@router.post("/logout", response_model=MessageResponse)
+def logout(response: Response):
+    response.delete_cookie("access_token")
+    response.delete_cookie("refresh_token")
+    return {"message": "Logged out successfully"}

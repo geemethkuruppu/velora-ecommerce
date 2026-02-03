@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import cartService from '../services/cartService';
 import { useAuth } from './AuthContext';
 
@@ -9,7 +9,7 @@ export const useCart = () => useContext(CartContext);
 const GUEST_CART_KEY = 'velora_guest_cart';
 
 export const CartProvider = ({ children }) => {
-    const { user, token, isAuthenticated } = useAuth();
+    const { user, isAuthenticated } = useAuth();
     const [cart, setCart] = useState(null);
     const [loading, setLoading] = useState(false);
     const [itemCount, setItemCount] = useState(0);
@@ -17,19 +17,19 @@ export const CartProvider = ({ children }) => {
     // Load cart on mount or when authentication changes
     useEffect(() => {
         loadCart();
-    }, [isAuthenticated, token]);
+    }, [isAuthenticated]);
 
     /**
      * Load cart from backend (authenticated) or localStorage (guest)
      */
     const loadCart = async () => {
-        console.log('[CartContext] loadCart called - isAuthenticated:', isAuthenticated, 'token:', !!token);
-        if (isAuthenticated && token) {
+        console.log('[CartContext] loadCart called - isAuthenticated:', isAuthenticated);
+        if (isAuthenticated) {
             // Load from backend
             try {
                 setLoading(true);
                 console.log('[CartContext] Fetching cart from backend...');
-                const cartData = await cartService.getCart(token);
+                const cartData = await cartService.getCart();
                 console.log('[CartContext] Cart data received:', cartData);
                 setCart(cartData);
                 setItemCount(cartData.total_items || 0);
@@ -42,7 +42,6 @@ export const CartProvider = ({ children }) => {
             // Load from localStorage
             console.log('[CartContext] Loading guest cart from localStorage');
             const guestCart = getGuestCart();
-            console.log('[CartContext] Guest cart items:', guestCart);
             setCart({ items: guestCart, total_items: guestCart.length });
             setItemCount(guestCart.reduce((sum, item) => sum + item.quantity, 0));
         }
@@ -82,10 +81,10 @@ export const CartProvider = ({ children }) => {
         try {
             setLoading(true);
 
-            if (isAuthenticated && token) {
+            if (isAuthenticated) {
                 // Add to backend
                 console.log('[CartContext] Adding to backend cart...');
-                await cartService.addToCart(token, productId, quantity, variantId);
+                await cartService.addToCart(productId, quantity, variantId);
                 console.log('[CartContext] Successfully added to backend, reloading cart...');
                 await loadCart(); // Reload cart
             } else {
@@ -110,7 +109,6 @@ export const CartProvider = ({ children }) => {
                 saveGuestCart(guestCart);
                 setCart({ items: guestCart, total_items: guestCart.length });
                 setItemCount(guestCart.reduce((sum, item) => sum + item.quantity, 0));
-                console.log('[CartContext] Guest cart updated, new count:', guestCart.length);
             }
 
             return true;
@@ -129,8 +127,8 @@ export const CartProvider = ({ children }) => {
         try {
             setLoading(true);
 
-            if (isAuthenticated && token) {
-                await cartService.removeFromCart(token, itemId);
+            if (isAuthenticated) {
+                await cartService.removeFromCart(itemId);
                 await loadCart();
             } else {
                 const guestCart = getGuestCart();
@@ -154,8 +152,8 @@ export const CartProvider = ({ children }) => {
         try {
             setLoading(true);
 
-            if (isAuthenticated && token) {
-                await cartService.updateCartItem(token, itemId, quantity);
+            if (isAuthenticated) {
+                await cartService.updateCartItem(itemId, quantity);
                 await loadCart();
             } else {
                 const guestCart = getGuestCart();
@@ -181,8 +179,8 @@ export const CartProvider = ({ children }) => {
         try {
             setLoading(true);
 
-            if (isAuthenticated && token) {
-                await cartService.clearCart(token);
+            if (isAuthenticated) {
+                await cartService.clearCart();
                 await loadCart();
             } else {
                 clearGuestCart();
@@ -201,7 +199,7 @@ export const CartProvider = ({ children }) => {
      * Merge guest cart with backend cart on login
      */
     const mergeCart = async () => {
-        if (!isAuthenticated || !token) return;
+        if (!isAuthenticated) return;
 
         const guestCart = getGuestCart();
         if (guestCart.length === 0) return;
@@ -214,7 +212,7 @@ export const CartProvider = ({ children }) => {
                 quantity: item.quantity
             }));
 
-            await cartService.mergeGuestCart(token, guestItems);
+            await cartService.mergeGuestCart(guestItems);
             clearGuestCart();
             await loadCart();
         } catch (error) {
@@ -227,7 +225,7 @@ export const CartProvider = ({ children }) => {
     // Calculate subtotal from cart
     const subtotal = cart?.subtotal || 0;
 
-    const value = {
+    const contextValue = useMemo(() => ({
         cart,
         loading,
         itemCount,
@@ -238,11 +236,12 @@ export const CartProvider = ({ children }) => {
         clearCart,
         mergeCart,
         refreshCart: loadCart
-    };
+    }), [cart, loading, itemCount, subtotal]);
 
     return (
-        <CartContext.Provider value={value}>
+        <CartContext.Provider value={contextValue}>
             {children}
         </CartContext.Provider>
     );
 };
+

@@ -1,187 +1,74 @@
-const API_BASE_URL = import.meta.env.VITE_AUTH_URL || 'https://q4yf0oqk42.execute-api.ap-south-1.amazonaws.com/prod/api/v1/auth';
+import api from './api';
+
+const API_BASE_URL = import.meta.env.VITE_AUTH_URL || 'http://localhost:8000/api/v1/auth';
 
 /**
  * Register a new user
- * @param {string} email - User email
- * @param {string} password - User password (min 8 chars)
- * @param {string} fullName - User's full name (optional)
- * @returns {Promise<Object>} User data
  */
 export const register = async (email, password, fullName = null) => {
-    try {
-        const response = await fetch(`${API_BASE_URL}/register`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                email,
-                password,
-                full_name: fullName,
-            }),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.detail || 'Registration failed');
-        }
-
-        return data;
-    } catch (error) {
-        throw error;
-    }
+    const response = await api.post(`${API_BASE_URL}/register`, {
+        email,
+        password,
+        full_name: fullName,
+    });
+    return response.data;
 };
 
 /**
  * Login user
- * @param {string} email - User email
- * @param {string} password - User password
- * @returns {Promise<Object>} Token response with user data
  */
 export const login = async (email, password) => {
-    try {
-        const response = await fetch(`${API_BASE_URL}/login`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                email,
-                password,
-            }),
-        });
+    const response = await api.post(`${API_BASE_URL}/login`, {
+        email,
+        password,
+    });
+    return response.data;
+};
 
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.detail || 'Login failed');
-        }
-
-        return data;
-    } catch (error) {
-        throw error;
-    }
+/**
+ * Logout user
+ */
+export const logout = async () => {
+    const response = await api.post(`${API_BASE_URL}/logout`);
+    return response.data;
 };
 
 /**
  * Get current user profile
- * @param {string} token - JWT access token
- * @returns {Promise<Object>} User data
  */
-export const getCurrentUser = async (token) => {
-    try {
-        const response = await fetch(`${API_BASE_URL}/me`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.detail || 'Failed to fetch user data');
-        }
-
-        return data;
-    } catch (error) {
-        throw error;
-    }
+export const getCurrentUser = async () => {
+    const response = await api.get(`${API_BASE_URL}/me`);
+    return response.data;
 };
 
 /**
  * Update user profile
- * @param {string} token - JWT access token
- * @param {string} fullName - Updated full name
- * @returns {Promise<Object>} Updated user data
  */
-export const updateProfile = async (token, fullName) => {
-    try {
-        const response = await fetch(`${API_BASE_URL}/edit`, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                full_name: fullName,
-            }),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.detail || 'Failed to update profile');
-        }
-
-        return data;
-    } catch (error) {
-        throw error;
-    }
+export const updateProfile = async (fullName) => {
+    const response = await api.put(`${API_BASE_URL}/edit`, {
+        full_name: fullName,
+    });
+    return response.data;
 };
 
 /**
  * Update user password
- * @param {string} token - JWT access token
- * @param {string} currentPassword - Current password
- * @param {string} newPassword - New password
- * @param {string} confirmPassword - Confirm new password
- * @returns {Promise<Object>} Success message
  */
-export const updatePassword = async (token, currentPassword, newPassword, confirmPassword) => {
-    try {
-        const response = await fetch(`${API_BASE_URL}/update-password`, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                current_password: currentPassword,
-                new_password: newPassword,
-                confirm_password: confirmPassword,
-            }),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.detail || 'Failed to update password');
-        }
-
-        return data;
-    } catch (error) {
-        throw error;
-    }
+export const updatePassword = async (currentPassword, newPassword, confirmPassword) => {
+    const response = await api.put(`${API_BASE_URL}/update-password`, {
+        current_password: currentPassword,
+        new_password: newPassword,
+        confirm_password: confirmPassword,
+    });
+    return response.data;
 };
 
 /**
  * Delete user account
- * @param {string} token - JWT access token
- * @returns {Promise<Object>} Success message
  */
-export const deleteAccount = async (token) => {
-    try {
-        const response = await fetch(`${API_BASE_URL}/delete`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.detail || 'Failed to delete account');
-        }
-
-        return data;
-    } catch (error) {
-        throw error;
-    }
+export const deleteAccount = async () => {
+    const response = await api.delete(`${API_BASE_URL}/delete`);
+    return response.data;
 };
 
 /**
@@ -210,6 +97,30 @@ export const validatePassword = (password) => {
         return {
             isValid: false,
             message: 'Password must be less than 128 characters',
+        };
+    }
+    if (!/[A-Z]/.test(password)) {
+        return {
+            isValid: false,
+            message: 'Password must contain at least one uppercase letter',
+        };
+    }
+    if (!/[a-z]/.test(password)) {
+        return {
+            isValid: false,
+            message: 'Password must contain at least one lowercase letter',
+        };
+    }
+    if (!/\d/.test(password)) {
+        return {
+            isValid: false,
+            message: 'Password must contain at least one digit',
+        };
+    }
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+        return {
+            isValid: false,
+            message: 'Password must contain at least one special character',
         };
     }
     return {

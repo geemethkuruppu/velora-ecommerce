@@ -11,6 +11,7 @@ class Category(Base):
     name = Column(String, nullable=False)
     slug = Column(String, unique=True, nullable=False, index=True)
     department = Column(String, nullable=False, default="Others")  # Womenswear, Menswear, Kidswear, Others
+    image_url = Column(String, nullable=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 

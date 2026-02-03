@@ -1,5 +1,6 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import List, Optional
+from app.core.utils import sanitize_string
 from datetime import datetime
 from decimal import Decimal
 import uuid
@@ -28,6 +29,11 @@ class OrderItemResponse(OrderItemBase):
 class OrderCreate(BaseModel):
     items: List[OrderItemCreate]
     shipping_address: str = Field(..., min_length=5)
+
+    @field_validator("shipping_address")
+    @classmethod
+    def sanitize_address(cls, v: str) -> str:
+        return sanitize_string(v)
 
 class OrderUpdateStatus(BaseModel):
     status: str

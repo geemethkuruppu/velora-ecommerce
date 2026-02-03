@@ -1,5 +1,7 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from typing import Optional
+from app.core.security import validate_password_strength
+from app.core.utils import sanitize_string
 
 
 # Incoming request
@@ -8,8 +10,23 @@ class UserCreate(BaseModel):
     password: str = Field(min_length=8, max_length=128)
     full_name: str = None
 
+    @field_validator("full_name")
+    @classmethod
+    def sanitize_name(cls, v: str) -> str:
+        return sanitize_string(v)
+
+    @field_validator("password")
+    @classmethod
+    def password_complexity(cls, v: str) -> str:
+        return validate_password_strength(v)
+
 class UserUpdate(BaseModel):
     full_name: Optional[str] = None
+
+    @field_validator("full_name")
+    @classmethod
+    def sanitize_name(cls, v: str) -> str:
+        return sanitize_string(v)
 
 # Outgoing response
 class UserResponse(BaseModel):
@@ -40,10 +57,20 @@ class ResetPasswordRequest(BaseModel):
     token: str
     new_password: str = Field(min_length=8, max_length=128)
 
+    @field_validator("new_password")
+    @classmethod
+    def password_complexity(cls, v: str) -> str:
+        return validate_password_strength(v)
+
 class UserPasswordUpdate(BaseModel):
     current_password: str
     new_password: str = Field(min_length=8, max_length=128)
     confirm_password: str = Field(min_length=8, max_length=128)
+
+    @field_validator("new_password")
+    @classmethod
+    def password_complexity(cls, v: str) -> str:
+        return validate_password_strength(v)
 
 class MessageResponse(BaseModel):
     message: str

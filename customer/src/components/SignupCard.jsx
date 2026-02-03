@@ -163,7 +163,7 @@ const SignupCard = ({ onSwitchToLogin }) => {
                     {errors.password && (
                         <p className="mt-1 text-xs text-red-500">{errors.password}</p>
                     )}
-                    <p className="mt-1 text-xs text-gray-400">Minimum 8 characters</p>
+                    <p className="mt-1 text-[10px] text-gray-400 leading-tight">8+ chars, Uppercase, Lowercase, Digit & Special Char</p>
                 </div>
                 <div>
                     <label className="block text-xs uppercase tracking-widest text-gray-500 mb-1.5">Confirm Password</label>

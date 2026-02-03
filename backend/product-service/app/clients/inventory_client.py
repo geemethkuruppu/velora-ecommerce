@@ -11,6 +11,10 @@ logger = logging.getLogger(__name__)
 from app.core.config import settings
 
 INVENTORY_SERVICE_URL = settings.inventory_service_url
+from app.core.logging_utils import correlation_id_ctx
+
+def get_headers():
+    return {"X-Correlation-ID": correlation_id_ctx.get() or ""}
 
 
 async def sync_variant_inventory(variant_id: int, variant_sku: str, initial_quantity: int = 0) -> Optional[dict]:
@@ -35,6 +39,7 @@ async def sync_variant_inventory(variant_id: int, variant_sku: str, initial_quan
                     "variant_sku": variant_sku,
                     "initial_quantity": initial_quantity
                 },
+                headers=get_headers(),
                 timeout=5.0
             )
             response.raise_for_status()
@@ -59,6 +64,7 @@ async def get_variant_stock(variant_id: int) -> Optional[int]:
         try:
             response = await client.get(
                 f"{INVENTORY_SERVICE_URL}/inventory/variant/{variant_id}",
+                headers=get_headers(),
                 timeout=5.0
             )
             response.raise_for_status()
@@ -81,6 +87,7 @@ async def add_variant_stock(variant_id: int, quantity: int) -> Optional[dict]:
                     "variant_id": variant_id,
                     "quantity": quantity
                 },
+                headers=get_headers(),
                 timeout=5.0
             )
             response.raise_for_status()
@@ -101,6 +108,7 @@ async def check_product_stock(variant_ids: list[int]) -> int:
             response = await client.post(
                 f"{INVENTORY_SERVICE_URL}/inventory/bulk-stock-check",
                 json={"variant_ids": variant_ids},
+                headers=get_headers(),
                 timeout=5.0
             )
             response.raise_for_status()
@@ -121,6 +129,7 @@ async def cleanup_product_inventory(variant_ids: list[int]) -> bool:
             response = await client.post(
                 f"{INVENTORY_SERVICE_URL}/inventory/cleanup",
                 json={"variant_ids": variant_ids},
+                headers=get_headers(),
                 timeout=10.0
             )
             response.raise_for_status()

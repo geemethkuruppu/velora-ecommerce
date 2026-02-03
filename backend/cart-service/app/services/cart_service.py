@@ -11,13 +11,15 @@ from app.schemas.cart import (
     CartItemResponse, ProductInfo, GuestCartItem
 )
 from app.core.config import settings
+from app.core.logging_utils import correlation_id_ctx
 
 async def fetch_product_info(product_id: int) -> Optional[ProductInfo]:
     """Fetch product information from product-service"""
     try:
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                f"{settings.product_service_url}/products/{product_id}"
+                f"{settings.product_service_url}/products/{product_id}",
+                headers={"X-Correlation-ID": correlation_id_ctx.get() or ""}
             )
             if response.status_code == 200:
                 data = response.json()

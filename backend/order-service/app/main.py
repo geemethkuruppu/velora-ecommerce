@@ -5,6 +5,11 @@ from app.db.base import Base
 from app.db.session import engine
 from app.api.v1.orders import router as orders_router
 from app.api.v1.events import router as events_router
+from slowapi.errors import RateLimitExceeded
+from slowapi import _rate_limit_exceeded_handler
+from app.core.limiter import limiter
+from app.core.logging_utils import setup_logging, CorrelationIdMiddleware
+from app.core.security_utils import SecurityHeadersMiddleware
 
 # Initialize FastAPI
 app = FastAPI(
@@ -13,15 +18,22 @@ app = FastAPI(
     description="Manages orders and orchestrates Saga transactions"
 )
 
+# Setup Structured Logging
+setup_logging(settings.app_name)
+
+# Add Correlation ID Middleware
+app.add_middleware(CorrelationIdMiddleware)
+
+# Add Security Headers Middleware
+app.add_middleware(SecurityHeadersMiddleware)
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 # CORS configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:5174",
-        "http://127.0.0.1:5174",
-    ],
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

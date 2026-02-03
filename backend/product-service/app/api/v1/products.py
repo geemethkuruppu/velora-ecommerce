@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query, UploadFile, File, HTTPException
+from fastapi import APIRouter, Depends, Query, UploadFile, File, HTTPException, Request
 from sqlalchemy.orm import Session
 from app.models.product import Category, Product, Type
 from app.db.deps import get_db
@@ -28,6 +28,7 @@ from app.api.deps import require_admin
 import os
 import shutil
 import uuid
+from app.core.limiter import limiter
 
 router = APIRouter(prefix="/products", tags=["Products"])
 
@@ -64,7 +65,8 @@ async def create(payload: ProductCreate, db: Session = Depends(get_db), _=Depend
 
 
 @router.get("", response_model=list[ProductResponse])
-def list_all(category_id: int | None = None, department: str | None = None, db: Session = Depends(get_db)):
+@limiter.limit("60/minute")
+def list_all(request: Request, category_id: int | None = None, department: str | None = None, db: Session = Depends(get_db)):
     """List all active products, optionally filtered by category or department"""
     return list_products(db, category_id, department)
 
@@ -77,7 +79,7 @@ def add_category(
     _=Depends(require_admin)
 ):
     """Create a new category (Admin only)"""
-    return create_category(db, payload.name, payload.slug, payload.department)
+    return create_category(db, payload.name, payload.slug, payload.department, payload.image_url)
 
 
 @router.get("/categories", response_model=list[CategoryResponse])
@@ -118,7 +120,8 @@ def delete_category(
 
 # Detail Endpoints (Keep at bottom to avoid shadowing)
 @router.get("/{product_id}", response_model=ProductResponse)
-def get_one(product_id: int, db: Session = Depends(get_db)):
+@limiter.limit("500/minute")
+def get_one(request: Request, product_id: int, db: Session = Depends(get_db)):
     """Get a specific product with all details"""
     return get_product(db, product_id)
 

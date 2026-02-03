@@ -1,33 +1,14 @@
-import axios from 'axios';
+import api from './api';
 
-// Get base URL from environment or default to production
-const INVENTORY_SERVICE_URL = import.meta.env.VITE_INVENTORY_URL || 'https://q4yf0oqk42.execute-api.ap-south-1.amazonaws.com/prod/api/v1/inventory';
-
-const api = axios.create({
-    baseURL: INVENTORY_SERVICE_URL,
-    headers: {
-        'Content-Type': 'application/json',
-    },
-});
-
-// Add auth interceptor
-api.interceptors.request.use((config) => {
-    const session = localStorage.getItem('velora_admin_user');
-    if (session) {
-        const token = JSON.parse(session).token;
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-    }
-    return config;
-});
+// Get base URL from environment or default
+const INVENTORY_SERVICE_URL = import.meta.env.VITE_INVENTORY_URL || 'http://localhost:8004/api/v1/inventory';
 
 const InventoryService = {
     // Get all inventory items with optional filters
     getInventory: async (lowStockOnly = false) => {
         try {
             const params = lowStockOnly ? { low_stock: true } : {};
-            const response = await api.get('', { params });
+            const response = await api.get(INVENTORY_SERVICE_URL, { params });
             return response.data;
         } catch (error) {
             console.error('Error fetching inventory:', error);
@@ -38,7 +19,7 @@ const InventoryService = {
     // Get dashboard stats
     getStats: async () => {
         try {
-            const response = await api.get('/stats');
+            const response = await api.get(`${INVENTORY_SERVICE_URL}/stats`);
             return response.data;
         } catch (error) {
             console.error('Error fetching inventory stats:', error);
@@ -49,7 +30,7 @@ const InventoryService = {
     // Get all reservations
     getReservations: async () => {
         try {
-            const response = await api.get('/reservations');
+            const response = await api.get(`${INVENTORY_SERVICE_URL}/reservations`);
             return response.data;
         } catch (error) {
             console.error('Error fetching reservations:', error);
@@ -60,7 +41,7 @@ const InventoryService = {
     // Get all events
     getEvents: async () => {
         try {
-            const response = await api.get('/events');
+            const response = await api.get(`${INVENTORY_SERVICE_URL}/events`);
             return response.data;
         } catch (error) {
             console.error('Error fetching events:', error);
@@ -71,7 +52,7 @@ const InventoryService = {
     // Get single variant (if needed)
     getVariant: async (variantId) => {
         try {
-            const response = await api.get(`/variant/${variantId}`);
+            const response = await api.get(`${INVENTORY_SERVICE_URL}/variant/${variantId}`);
             return response.data;
         } catch (error) {
             console.error('Error fetching variant:', error);
@@ -82,7 +63,7 @@ const InventoryService = {
     // Manual stock adjustments
     addStock: async (variantId, quantity) => {
         try {
-            const response = await api.post('/add-stock', { variant_id: variantId, quantity });
+            const response = await api.post(`${INVENTORY_SERVICE_URL}/add-stock`, { variant_id: variantId, quantity });
             return response.data;
         } catch (error) {
             console.error('Error adding stock:', error);
@@ -92,7 +73,7 @@ const InventoryService = {
 
     removeStock: async (variantId, quantity) => {
         try {
-            const response = await api.post('/remove-stock', { variant_id: variantId, quantity });
+            const response = await api.post(`${INVENTORY_SERVICE_URL}/remove-stock`, { variant_id: variantId, quantity });
             return response.data;
         } catch (error) {
             console.error('Error removing stock:', error);
@@ -102,7 +83,7 @@ const InventoryService = {
 
     updateStock: async (variantId, quantity) => {
         try {
-            const response = await api.post('/update-stock', { variant_id: variantId, quantity });
+            const response = await api.post(`${INVENTORY_SERVICE_URL}/update-stock`, { variant_id: variantId, quantity });
             return response.data;
         } catch (error) {
             console.error('Error updating stock:', error);

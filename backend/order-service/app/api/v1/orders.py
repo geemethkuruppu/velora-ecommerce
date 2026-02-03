@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from typing import List
 import uuid
@@ -9,11 +9,14 @@ from app.db.deps import get_db
 from app.api.deps import get_current_user
 from app.schemas.order import OrderCreate, OrderResponse, OrderUpdateStatus, OrderStatsResponse
 from app.services.order_service import OrderService
+from app.core.limiter import limiter
 
 router = APIRouter(prefix="/orders", tags=["Orders"])
 
 @router.post("", response_model=OrderResponse)
+@limiter.limit("5/minute")
 async def create_order(
+    request: Request,
     payload: OrderCreate,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
@@ -83,7 +86,9 @@ def get_order(
     return order
 
 @router.post("/{order_id}/cancel", response_model=OrderResponse)
+@limiter.limit("5/minute")
 async def cancel_order(
+    request: Request,
     order_id: uuid.UUID,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)

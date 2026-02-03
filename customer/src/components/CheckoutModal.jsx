@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom';
 
 const CheckoutModal = ({ isOpen, onClose }) => {
     const { cart, subtotal, clearCart } = useCart();
-    const { token } = useAuth();
+    const { user } = useAuth();
     const navigate = useNavigate();
 
     const [shippingAddress, setShippingAddress] = useState('');
@@ -47,7 +47,7 @@ const CheckoutModal = ({ isOpen, onClose }) => {
                 shipping_address: shippingAddress
             };
 
-            await orderService.createOrder(token, orderData);
+            await orderService.createOrder(orderData);
 
             toast.success('Order placed successfully!', { id: toastId });
             await clearCart();

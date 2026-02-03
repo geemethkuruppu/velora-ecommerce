@@ -1,27 +1,42 @@
 import requests
 from typing import Optional, List, Dict
 import os
+import logging
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+
+logger = logging.getLogger(__name__)
 
 AUTH_SERVICE_URL = os.getenv("AUTH_SERVICE_URL", "http://localhost:8000/api/v1/auth")
+from app.core.logging_utils import correlation_id_ctx
+
+def get_headers():
+    return {"X-Correlation-ID": correlation_id_ctx.get() or ""}
 
 class UserClient:
     @staticmethod
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        retry=retry_if_exception_type((requests.exceptions.ConnectionError, requests.exceptions.Timeout, requests.exceptions.HTTPError)),
+        reraise=False
+    )
     def get_all_users() -> Dict[int, str]:
         """
         Fetch all users from auth service and return a map of id -> name.
         Uses admin endpoint. In real prod, this should definitely have auth headers.
         """
         try:
-            # Note: This endpoint usually requires Admin auth. 
-            # For this simplified setup, we might need to bypass or mock authentication 
-            # OR pass a system token.
-            # Assuming for now we can call it (or we mock it if auth is enforced heavily)
-            # In the current setup, get_all_users in auth-service DOES require admin.
-            # We will implement a 'soft' workaround or just try to call it.
-            # If it fails, we fall back to placeholders.
-            
             # TODO: Add proper service-to-service auth token
-            response = requests.get(f"{AUTH_SERVICE_URL}/users")
+            response = requests.get(
+                f"{AUTH_SERVICE_URL}/users",
+                headers=get_headers(),
+                timeout=5.0
+            )
+            
+            # Raise for transient errors to trigger retry
+            if response.status_code in [502, 503, 504]:
+                response.raise_for_status()
+
             if response.status_code == 200:
                 users = response.json()
                 user_map = {}
@@ -32,6 +47,9 @@ class UserClient:
                     user_map[user['id']] = name
                 return user_map
             return {}
+        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
+            logger.error(f"Transient error fetching users: {e}. Retrying...")
+            raise
         except Exception as e:
-            print(f"Failed to fetch users: {e}")
+            logger.error(f"Failed to fetch users: {e}")
             return {}

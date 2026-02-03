@@ -3,7 +3,7 @@ from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate
 from app.core.security import hash_password
 from fastapi import HTTPException, status
-from app.core.security import create_access_token
+from app.core.security import create_access_token, create_refresh_token
 from app.core.config import settings
 from app.core.security import verify_password
 from app.models.user import User
@@ -53,18 +53,24 @@ def login_user(db: Session, email: str, password: str):
             detail="User account is inactive"
         )
 
-    # 3️⃣ Create JWT (JWT = identity proof, not user profile)
-    token = create_access_token(
+    # 3️⃣ Create JWTs
+    access_token = create_access_token(
         data={
             "sub": str(user.id),
             "role": user.role
-        },
-        expires_minutes=settings.access_token_expire_minutes
+        }
     )
-
-    # 4️⃣ Return token + SAFE user info
+    
+    refresh_token = create_refresh_token(
+        data={
+            "sub": str(user.id)
+        }
+    )
+    
+    # 4️⃣ Return tokens + SAFE user info
     return {
-        "access_token": token,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
         "token_type": "bearer",
         "expires_in": settings.access_token_expire_minutes * 60,
         "user": {
@@ -191,6 +197,12 @@ def reset_password(db: Session, token: str, new_password: str):
             detail="User not found"
         )
     
+    if verify_password(new_password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="New password cannot be the same as the old password"
+        )
+    
     user.hashed_password = hash_password(new_password)
     db.commit()
     
@@ -201,6 +213,12 @@ def update_password(db: Session, user: User, current_password: str, new_password
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Incorrect current password"
+        )
+    
+    if current_password == new_password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="New password must be different from the current password"
         )
     
     user.hashed_password = hash_password(new_password)
