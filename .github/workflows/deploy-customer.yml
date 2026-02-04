@@ -5,6 +5,7 @@ on:
     branches: [ "main", "dev" ]
     paths:
       - 'customer/**'
+      - '.github/workflows/deploy-customer.yml'
 
 env:
   AWS_REGION: ap-south-1
