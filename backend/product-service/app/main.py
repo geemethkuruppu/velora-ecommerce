@@ -11,7 +11,13 @@ from slowapi import _rate_limit_exceeded_handler
 from app.core.limiter import limiter
 from app.core.logging_utils import setup_logging, CorrelationIdMiddleware
 from app.core.security_utils import SecurityHeadersMiddleware
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Product Service")
 
@@ -47,6 +53,18 @@ async def cors_handler(request: Request, call_next):
 
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """
+    Detailed logging for 422 errors to identify mismatched schemas.
+    """
+    logger.error(f"422 Validation Error: {exc.errors()}")
+    logger.error(f"Body: {await request.body()}")
+    return JSONResponse(
+        status_code=422,
+        content=jsonable_encoder({"detail": exc.errors(), "body": str(await request.body())}),
+    )
 
 # Create uploads directory if it doesn't exist
 os.makedirs("uploads/products", exist_ok=True)

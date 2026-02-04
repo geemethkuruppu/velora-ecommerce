@@ -56,6 +56,9 @@ def upload_media(file: UploadFile = File(...), _=Depends(require_admin)):
     s3_client = boto3.client('s3', region_name=settings.aws_region)
     
     try:
+        # Ensure file pointer is at the start
+        file.file.seek(0)
+        
         # Upload to S3
         s3_client.upload_fileobj(
             file.file,
