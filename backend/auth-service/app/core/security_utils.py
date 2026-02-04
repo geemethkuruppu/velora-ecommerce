@@ -24,5 +24,11 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         # 6. Referrer Policy
         # Only send referrer when navigating within the same site
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+
+        # 7. Disable Caching for API Security
+        # Critical for CloudFront to avoid caching CORS headers or 401 responses
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
         
         return response

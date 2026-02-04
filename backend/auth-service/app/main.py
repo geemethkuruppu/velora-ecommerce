@@ -25,28 +25,18 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 # Add Correlation ID Middleware
 app.add_middleware(CorrelationIdMiddleware)
 
-# Consistently handle CORS for all requests (Same-Origin and Cross-Origin)
-@app.middleware("http")
-async def cors_handler(request: Request, call_next):
-    origin = request.headers.get("origin")
-    
-    # Preflight (OPTIONS) requests generally handled by API Gateway, 
-    # but we handle them here too just in case of direct ALB hits.
-    if request.method == "OPTIONS":
-        response = Response()
-    else:
-        response = await call_next(request)
+# Add Security Headers Middleware
+app.add_middleware(SecurityHeadersMiddleware)
 
-    if origin:
-        # Check if origin is allowed
-        if any(allowed_origin in origin for allowed_origin in settings.cors_origins):
-            response.headers["Access-Control-Allow-Origin"] = origin
-            response.headers["Access-Control-Allow-Credentials"] = "true"
-            response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
-            response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With, Cookie"
-            response.headers["Access-Control-Expose-Headers"] = "Set-Cookie"
-
-    return response
+# Add CORS Middleware (Standard)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["Set-Cookie", "Content-Disposition"]
+)
 
 
 Base.metadata.create_all(bind=engine)
