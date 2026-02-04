@@ -6,7 +6,8 @@ from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_excep
 
 logger = logging.getLogger(__name__)
 
-AUTH_SERVICE_URL = os.getenv("AUTH_SERVICE_URL", "http://localhost:8000/api/v1/auth")
+from app.core.config import settings
+AUTH_SERVICE_URL = settings.auth_service_url
 from app.core.logging_utils import correlation_id_ctx
 
 def get_headers():
@@ -41,9 +42,7 @@ class UserClient:
                 users = response.json()
                 user_map = {}
                 for user in users:
-                    name = f"{user.get('first_name', '')} {user.get('last_name', '')}".strip()
-                    if not name:
-                        name = user.get('email', 'Unknown')
+                    name = user.get('full_name') or user.get('email', 'Unknown')
                     user_map[user['id']] = name
                 return user_map
             return {}
