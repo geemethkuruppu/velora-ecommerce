@@ -40,9 +40,10 @@ class Settings(BaseSettings):
         "https://d2dnnb0ijn36mw.cloudfront.net",
     ]
     
-    # External Service URLs
-    inventory_service_url: str = "http://localhost:8004/api/v1"
-    product_service_url: str = "http://localhost:8001/api/v1"
+    # External Service URLs (Using ALB for Production)
+    auth_service_url: str = "http://velora-auth-alb-1482335493.ap-south-1.elb.amazonaws.com/api/v1/auth"
+    inventory_service_url: str = "http://velora-auth-alb-1482335493.ap-south-1.elb.amazonaws.com/api/v1/inventory"
+    product_service_url: str = "http://velora-auth-alb-1482335493.ap-south-1.elb.amazonaws.com/api/v1/products"
     
     # Email
     smtp_host: str = "smtp.gmail.com"

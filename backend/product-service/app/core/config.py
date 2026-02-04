@@ -12,8 +12,8 @@ class Settings(BaseSettings):
     port: int = 8001
     access_token_expire_minutes: int = 30
     
-    # External Service URLs
-    inventory_service_url: str = "http://localhost:8004/api/v1"
+    # External Service URLs (Using ALB for Production)
+    inventory_service_url: str = "http://velora-auth-alb-1482335493.ap-south-1.elb.amazonaws.com/api/v1/inventory"
 
     # Database settings
     db_host: str

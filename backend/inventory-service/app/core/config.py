@@ -48,9 +48,9 @@ class Settings(BaseSettings):
     smtp_from_email: str = "admin@velora.com"
     admin_email: str = "geemeth@velora.com" # Default admin to alert
 
-    # External Service URLs
-    order_service_url: str = "http://localhost:8002/api/v1"
-    product_service_url: str = "http://localhost:8001/api/v1"
+    # External Service URLs (Using ALB for Production)
+    order_service_url: str = "http://velora-auth-alb-1482335493.ap-south-1.elb.amazonaws.com/api/v1/orders"
+    product_service_url: str = "http://velora-auth-alb-1482335493.ap-south-1.elb.amazonaws.com/api/v1/products"
 
     class Config:
         env_file = ".env"
