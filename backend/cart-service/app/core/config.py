@@ -8,12 +8,12 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     
     # Server settings
-    host: str = "127.0.0.1"
+    host: str = "0.0.0.0"
     port: int = 8005
     access_token_expire_minutes: int = 30
     
-    # External Service URLs
-    product_service_url: str = "http://localhost:8001/api/v1"
+    # External Service URLs (Using ALB for Production)
+    product_service_url: str = "http://velora-auth-alb-1482335493.ap-south-1.elb.amazonaws.com/api/v1/products"
     
     # Database settings
     db_host: str
@@ -29,14 +29,7 @@ class Settings(BaseSettings):
     
     # CORS
     cors_origins: list[str] = [
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:5174",
-        "http://127.0.0.1:5174",
-        "http://velora-customer-app.s3-website.ap-south-1.amazonaws.com",
-        "http://d2h62r2viksjq5.cloudfront.net",
         "https://d2h62r2viksjq5.cloudfront.net",
-        "http://velora-admin-dashboard.s3-website.ap-south-1.amazonaws.com",
         "https://d2dnnb0ijn36mw.cloudfront.net",
     ]
 

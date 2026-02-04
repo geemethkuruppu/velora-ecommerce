@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     
     # Server settings
-    host: str = "127.0.0.1"
+    host: str = "0.0.0.0"
     port: int = 8001
     access_token_expire_minutes: int = 30
     
@@ -33,10 +33,7 @@ class Settings(BaseSettings):
     
     # CORS
     cors_origins: list[str] = [
-        "http://velora-customer-app.s3-website.ap-south-1.amazonaws.com",
-        "http://d2h62r2viksjq5.cloudfront.net",
         "https://d2h62r2viksjq5.cloudfront.net",
-        "http://velora-admin-dashboard.s3-website.ap-south-1.amazonaws.com",
         "https://d2dnnb0ijn36mw.cloudfront.net",
     ]
 
