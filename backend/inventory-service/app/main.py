@@ -52,4 +52,4 @@ def health_check():
     }
 
 app.include_router(inventory_router, prefix="/api/v1")
-app.include_router(events_router, prefix="/api/v1")
+app.include_router(events_router, prefix="/api/v1/inventory")

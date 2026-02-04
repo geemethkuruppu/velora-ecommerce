@@ -25,10 +25,13 @@ from app.services.product_service import (
 )
 from app.clients import inventory_client
 from app.api.deps import require_admin
+from app.core.config import settings
 import os
 import shutil
 import uuid
 from app.core.limiter import limiter
+import boto3
+from botocore.exceptions import ClientError
 
 router = APIRouter(prefix="/products", tags=["Products"])
 
