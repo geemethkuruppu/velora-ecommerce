@@ -78,7 +78,10 @@ def upload_media(file: UploadFile = File(...), _=Depends(require_admin)):
             file.file,
             settings.s3_bucket_name,
             unique_filename,
-            ExtraArgs={'ContentType': file.content_type}
+            ExtraArgs={
+                'ContentType': file.content_type,
+                'ACL': 'public-read'
+            }
         )
     except ClientError as e:
         raise HTTPException(status_code=500, detail=f"S3 Upload failed: {str(e)}")
