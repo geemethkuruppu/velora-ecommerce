@@ -63,5 +63,5 @@ Base.metadata.create_all(bind=engine)
 def health_check():
     return {"status": "running", "service": "product-service", "port": 8001}
 
-app.include_router(products_router, prefix="/api/v1")
 app.include_router(types_router, prefix="/api/v1")
+app.include_router(products_router, prefix="/api/v1")
