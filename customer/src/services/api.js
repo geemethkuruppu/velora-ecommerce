@@ -22,7 +22,8 @@ api.interceptors.response.use(
             originalRequest._retry = true;
 
             try {
-                const AUTH_URL = import.meta.env.VITE_AUTH_URL || 'http://localhost:8000/api/v1/auth';
+                const AUTH_URL = import.meta.env.VITE_AUTH_URL;
+                if (!AUTH_URL) throw new Error('AUTH_URL not configured');
                 await axios.post(`${AUTH_URL}/refresh`, {}, { withCredentials: true });
                 return api(originalRequest);
             } catch (refreshError) {

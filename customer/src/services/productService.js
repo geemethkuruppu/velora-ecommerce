@@ -1,20 +1,15 @@
 import api from './api';
 
 const API_URL = import.meta.env.VITE_PRODUCT_URL;
-const API_BASE = API_URL.split('/api/v1')[0];
-const IMAGE_BASE_URL = `${API_BASE}/uploads/`;
 
 export const formatImageUrl = (url) => {
     if (!url) return null;
+    // If it's already a full URL (S3), return it directly
     if (url.startsWith('http')) return url;
 
-    // Cleanup the URL: remove leading slash, remove leading 'uploads/' if present
-    let cleanUrl = url.startsWith('/') ? url.slice(1) : url;
-    if (cleanUrl.startsWith('uploads/')) {
-        cleanUrl = cleanUrl.replace('uploads/', '');
-    }
-
-    return `${IMAGE_BASE_URL}${cleanUrl}`;
+    // For any legacy local paths, we assume they should be handled as-is
+    // But since the new system uses S3, we prioritize absolute URLs
+    return url;
 };
 
 const productService = {
