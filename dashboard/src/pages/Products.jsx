@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Search, Plus, Package, Edit2, Trash2, Eye, X, Image as ImageIcon, Settings, List, PlusCircle, MinusCircle, CheckCircle, Tag, Layers, UploadCloud, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { productService } from '../services/productService';
 import SuccessMessage from '../components/SuccessMessage';
@@ -569,7 +569,7 @@ const Products = () => {
                                                             <option value="">Select Type</option>
                                                             {types.map(t => (
                                                                 <option key={t.id} value={t.id}>
-                                                                    {t.category?.department} — {t.category?.name} — {t.name}
+                                                                    {t.category?.department} â€” {t.category?.name} â€” {t.name}
                                                                 </option>
                                                             ))}
                                                         </select>
@@ -819,9 +819,9 @@ const Products = () => {
                                                                                     updateNestedItem('media', index, 'isUploading', true);
 
                                                                                     const res = await productService.uploadMedia(file);
-
+                                                                                    
                                                                                     updateNestedItem('media', index, 'media_url', res.url);
-                                                                                    updateNestedItem('media', index, 'localPreview', null);
+                                                                                    // Keeping localPreview to prevent flicker
                                                                                 } catch (err) {
                                                                                     setError('Failed to upload image. Please try again.');
                                                                                     updateNestedItem('media', index, 'localPreview', null);
@@ -1020,7 +1020,7 @@ const Products = () => {
                                     </div>
                                     <div>
                                         <h2 className="text-2xl font-bold text-primary tracking-tight">{viewingProduct.name}</h2>
-                                        <p className="text-[10px] text-text-muted font-bold uppercase tracking-widest">{viewingProduct.sku} • {viewingProduct.type?.category?.name || 'Uncategorized'}</p>
+                                        <p className="text-[10px] text-text-muted font-bold uppercase tracking-widest">{viewingProduct.sku} â€¢ {viewingProduct.type?.category?.name || 'Uncategorized'}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3">
@@ -1233,7 +1233,7 @@ const Products = () => {
                 onConfirm={handleDeleteProduct}
                 title="Delete Product"
                 message={deletingProductStock > 0
-                    ? `⚠️ WARNING: "${deletingProduct?.name}" has ${deletingProductStock} items in total stock. Deleting this product will PERMANENTLY remove all variants and wipe their inventory records. Proceed?`
+                    ? `âš ï¸ WARNING: "${deletingProduct?.name}" has ${deletingProductStock} items in total stock. Deleting this product will PERMANENTLY remove all variants and wipe their inventory records. Proceed?`
                     : `Are you sure you want to permanently delete "${deletingProduct?.name}"? This action cannot be undone and will remove all variants and media.`
                 }
                 confirmText={isDeleting ? "Deleting..." : "Delete Product"}

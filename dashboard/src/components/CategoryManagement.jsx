@@ -29,9 +29,7 @@ const CategoryManagement = ({
             setUploading(true);
             const response = await productService.uploadMedia(file);
             setCategoryData({ ...categoryData, image_url: response.url });
-            // Once uploaded successfully, we can clear the local preview 
-            // as the categoryData.image_url will now take over
-            setLocalPreview(null);
+            // We NO LONGER clear localPreview here to prevent flickering to S3 too early
         } catch (error) {
             console.error('Error uploading category image:', error);
             alert('Failed to upload image. Please try again.');

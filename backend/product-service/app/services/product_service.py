@@ -193,7 +193,13 @@ async def delete_product(db: Session, product: Product):
             payload={"variant_ids": variant_ids}
         )
     
-    # 2. Local Cleanup (SQLAlchemy cascades should handle variants, media, specs)
+    # 2. Cleanup S3 media
+    from app.core.s3_utils import delete_s3_object
+    for media in product.media:
+        if media.media_url:
+            delete_s3_object(media.media_url)
+            
+    # 3. Local Cleanup (SQLAlchemy cascades should handle variants, media, specs)
     db.delete(product)
     db.commit()
     return {"message": "Product and associated inventory deleted successfully"}

@@ -131,6 +131,11 @@ def delete_category(
             detail=f"Cannot delete category. {types_count} type(s) are using this category."
         )
     
+    # Cleanup S3 media if it exists
+    if category.image_url:
+        from app.core.s3_utils import delete_s3_object
+        delete_s3_object(category.image_url)
+        
     db.delete(category)
     db.commit()
     return None
