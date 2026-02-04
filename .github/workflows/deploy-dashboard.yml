@@ -40,11 +40,11 @@ jobs:
         npm run build
       env:
         # POINT THIS TO YOUR ALB LOAD BALANCER URL
-        VITE_AUTH_URL: https://q4yf0oqk42.execute-api.ap-south-1.amazonaws.com/prod/api/v1/auth
-        VITE_PRODUCT_URL: https://q4yf0oqk42.execute-api.ap-south-1.amazonaws.com/prod/api/v1/products
-        VITE_ORDER_URL: https://q4yf0oqk42.execute-api.ap-south-1.amazonaws.com/prod/api/v1/orders
-        VITE_INVENTORY_URL: https://q4yf0oqk42.execute-api.ap-south-1.amazonaws.com/prod/api/v1/inventory
-        VITE_CART_URL: https://q4yf0oqk42.execute-api.ap-south-1.amazonaws.com/prod/api/v1/cart
+        VITE_AUTH_URL: https://d2dnnb0ijn36mw.cloudfront.net/prod/api/v1/auth
+        VITE_PRODUCT_URL: https://d2dnnb0ijn36mw.cloudfront.net/prod/api/v1/products
+        VITE_ORDER_URL: https://d2dnnb0ijn36mw.cloudfront.net/prod/api/v1/orders
+        VITE_INVENTORY_URL: https://d2dnnb0ijn36mw.cloudfront.net/prod/api/v1/inventory
+        VITE_CART_URL: https://d2dnnb0ijn36mw.cloudfront.net/prod/api/v1/cart
 
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v1
