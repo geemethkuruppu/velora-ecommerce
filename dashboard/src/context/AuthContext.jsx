@@ -16,9 +16,12 @@ export const AuthProvider = ({ children }) => {
         const verifySession = async () => {
             try {
                 const AUTH_URL = import.meta.env.VITE_AUTH_URL || 'http://localhost:8000/api/v1/auth';
+                console.log('🔄 Dashboard: Verifying Session at', `${AUTH_URL}/me`);
                 const response = await api.get(`${AUTH_URL}/me`, { _silent: true });
+                console.log('✅ Dashboard: Session Verified:', response.data);
                 setUser(response.data);
             } catch (err) {
+                console.error('❌ Dashboard: Session Verification Failed:', err.response?.status, err.message);
                 setUser(null);
             } finally {
                 setLoading(false);
@@ -31,12 +34,19 @@ export const AuthProvider = ({ children }) => {
     const login = async (email, password) => {
         try {
             const loginUrl = `${import.meta.env.VITE_AUTH_URL}/login`;
+            console.log('🔄 Dashboard: Attempting login at', loginUrl);
             const response = await api.post(loginUrl, {
                 email,
                 password
             });
 
+            console.log('✅ Dashboard: Login response data:', response.data);
             const { user: userData } = response.data;
+
+            if (!userData) {
+                console.error('⚠️ Dashboard: Missing user object in login response:', response.data);
+                throw new Error('Login failed: Response missing user data.');
+            }
 
             // Business Logic Checks
             if (userData.role !== 'ADMIN' && userData.role !== 'SUPER_ADMIN') {
@@ -53,6 +63,7 @@ export const AuthProvider = ({ children }) => {
             return userData;
 
         } catch (error) {
+            console.error('❌ Dashboard: Login process error:', error);
             if (error.response) {
                 throw new Error(error.response.data.detail || 'Invalid administrative credentials.');
             }
