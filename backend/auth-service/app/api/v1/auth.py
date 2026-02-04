@@ -68,8 +68,8 @@ def login(request: Request, payload: UserLogin, response: Response, db: Session 
         httponly=True,
         max_age=settings.access_token_expire_minutes * 60,
         expires=settings.access_token_expire_minutes * 60,
-        samesite="lax",
-        secure=False, # Set to True in production with HTTPS
+        samesite="none" if settings.env == "production" else "lax",
+        secure=True if settings.env == "production" else False,
     )
     
     response.set_cookie(
@@ -78,8 +78,8 @@ def login(request: Request, payload: UserLogin, response: Response, db: Session 
         httponly=True,
         max_age=settings.refresh_token_expire_days * 24 * 60 * 60,
         expires=settings.refresh_token_expire_days * 24 * 60 * 60,
-        samesite="lax",
-        secure=False, # Set to True in production with HTTPS
+        samesite="none" if settings.env == "production" else "lax",
+        secure=True if settings.env == "production" else False,
     )
     
     return result
