@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Package, Edit2, Trash2, Eye, X, Image as ImageIcon, Settings, List, PlusCircle, MinusCircle, CheckCircle, Tag, Layers, UploadCloud, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Plus, Package, Edit2, Trash2, Eye, X, Image as ImageIcon, Settings, List, PlusCircle, MinusCircle, CheckCircle, Tag, Layers, UploadCloud, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { productService } from '../services/productService';
 import SuccessMessage from '../components/SuccessMessage';
 import ConfirmationDialog from '../components/ConfirmationDialog';
@@ -783,9 +783,14 @@ const Products = () => {
                                                                 <MinusCircle size={16} />
                                                             </button>
 
-                                                            {med.media_url && med.media_type === 'image' && (
-                                                                <div className="w-full h-32 rounded-2xl overflow-hidden bg-white border border-gray-100 flex items-center justify-center shadow-inner">
-                                                                    <img src={med.media_url} alt="Preview" className="max-h-full max-w-full object-contain p-2" />
+                                                            {(med.media_url || med.localPreview) && med.media_type === 'image' && (
+                                                                <div className="w-full h-32 rounded-2xl overflow-hidden bg-white border border-gray-100 flex items-center justify-center shadow-inner relative">
+                                                                    <img src={med.localPreview || med.media_url} alt="Preview" className="max-h-full max-w-full object-contain p-2" />
+                                                                    {med.isUploading && (
+                                                                        <div className="absolute inset-0 bg-white/60 flex items-center justify-center">
+                                                                            <Loader2 className="animate-spin text-primary" size={24} />
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             )}
 
@@ -809,10 +814,19 @@ const Products = () => {
                                                                                 const file = e.target.files[0];
                                                                                 if (!file) return;
                                                                                 try {
+                                                                                    const previewUrl = URL.createObjectURL(file);
+                                                                                    updateNestedItem('media', index, 'localPreview', previewUrl);
+                                                                                    updateNestedItem('media', index, 'isUploading', true);
+
                                                                                     const res = await productService.uploadMedia(file);
+
                                                                                     updateNestedItem('media', index, 'media_url', res.url);
+                                                                                    updateNestedItem('media', index, 'localPreview', null);
                                                                                 } catch (err) {
                                                                                     setError('Failed to upload image. Please try again.');
+                                                                                    updateNestedItem('media', index, 'localPreview', null);
+                                                                                } finally {
+                                                                                    updateNestedItem('media', index, 'isUploading', false);
                                                                                 }
                                                                             }}
                                                                         />

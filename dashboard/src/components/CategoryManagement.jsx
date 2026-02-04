@@ -13,6 +13,7 @@ const CategoryManagement = ({
 }) => {
     const fileInputRef = useRef(null);
     const [uploading, setUploading] = useState(false);
+    const [localPreview, setLocalPreview] = useState(null);
 
     if (!isOpen) return null;
 
@@ -20,13 +21,21 @@ const CategoryManagement = ({
         const file = e.target.files[0];
         if (!file) return;
 
+        // Create instant local preview
+        const previewUrl = URL.createObjectURL(file);
+        setLocalPreview(previewUrl);
+
         try {
             setUploading(true);
             const response = await productService.uploadMedia(file);
             setCategoryData({ ...categoryData, image_url: response.url });
+            // Once uploaded successfully, we can clear the local preview 
+            // as the categoryData.image_url will now take over
+            setLocalPreview(null);
         } catch (error) {
             console.error('Error uploading category image:', error);
             alert('Failed to upload image. Please try again.');
+            setLocalPreview(null); // Clear preview on error
         } finally {
             setUploading(false);
         }
@@ -64,11 +73,16 @@ const CategoryManagement = ({
                                     className={`w-full h-full rounded-2xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all overflow-hidden relative group ${categoryData.image_url ? 'border-primary/20 bg-gray-50' : 'border-gray-200 hover:border-primary/40 bg-gray-50/50'
                                         }`}
                                 >
-                                    {uploading ? (
+                                    {uploading && !localPreview ? (
                                         <Loader2 className="animate-spin text-primary" size={24} />
-                                    ) : categoryData.image_url ? (
+                                    ) : (localPreview || categoryData.image_url) ? (
                                         <>
-                                            <img src={categoryData.image_url} alt="Preview" className="w-full h-full object-cover" />
+                                            <img src={localPreview || categoryData.image_url} alt="Preview" className="w-full h-full object-cover" />
+                                            {uploading && (
+                                                <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                                                    <Loader2 className="animate-spin text-white" size={20} />
+                                                </div>
+                                            )}
                                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white text-[10px] font-bold uppercase tracking-widest">
                                                 Change
                                             </div>
