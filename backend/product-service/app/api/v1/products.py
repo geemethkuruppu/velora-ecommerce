@@ -57,7 +57,21 @@ def upload_media(file: UploadFile = File(...), _=Depends(require_admin)):
     
     try:
         # Ensure file pointer is at the start
+        # Binary Integrity Check: Verify file signature
+        header = await file.read(4)
+        await file.seek(0)
+        
+        # Common image headers: JPEG (FF D8 FF), PNG (89 50 4E 47), GIF (47 49 46 38)
+        if not (header.startswith(b'\xff\xd8\xff') or header.startswith(b'\x89PNG') or header.startswith(b'GIF8')):
+            logger.error(f"Binary Integrity Check FAILED. Header: {header.hex()}")
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid image file. Binary data appears corrupted or of an unsupported format."
+            )
+        logger.info(f"Binary Integrity Check PASSED. Header: {header.hex()}")
+
         file.file.seek(0)
+        
         
         # Upload to S3
         s3_client.upload_fileobj(

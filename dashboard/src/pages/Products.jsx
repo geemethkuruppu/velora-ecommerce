@@ -569,7 +569,7 @@ const Products = () => {
                                                             <option value="">Select Type</option>
                                                             {types.map(t => (
                                                                 <option key={t.id} value={t.id}>
-                                                                    {t.category?.department} â€” {t.category?.name} â€” {t.name}
+                                                                    {t.category?.department} - {t.category?.name} - {t.name}
                                                                 </option>
                                                             ))}
                                                         </select>
@@ -819,7 +819,7 @@ const Products = () => {
                                                                                     updateNestedItem('media', index, 'isUploading', true);
 
                                                                                     const res = await productService.uploadMedia(file);
-                                                                                    
+
                                                                                     updateNestedItem('media', index, 'media_url', res.url);
                                                                                     // Keeping localPreview to prevent flicker
                                                                                 } catch (err) {
