@@ -61,15 +61,16 @@ def login(request: Request, payload: UserLogin, response: Response, db: Session 
     
     result = login_user(db, payload.email, payload.password)
     
-    # Set HttpOnly cookies
+    # Set HttpOnly cookies with path="/" for cross-service visibility
     response.set_cookie(
         key="access_token",
         value=result["access_token"],
         httponly=True,
         max_age=settings.access_token_expire_minutes * 60,
         expires=settings.access_token_expire_minutes * 60,
-        samesite="none" if settings.env == "production" else "lax",
+        samesite="lax" if settings.env == "production" else "lax",
         secure=True if settings.env == "production" else False,
+        path="/"
     )
     
     response.set_cookie(
@@ -78,8 +79,9 @@ def login(request: Request, payload: UserLogin, response: Response, db: Session 
         httponly=True,
         max_age=settings.refresh_token_expire_days * 24 * 60 * 60,
         expires=settings.refresh_token_expire_days * 24 * 60 * 60,
-        samesite="none" if settings.env == "production" else "lax",
+        samesite="lax" if settings.env == "production" else "lax",
         secure=True if settings.env == "production" else False,
+        path="/"
     )
     
     return result
@@ -297,8 +299,9 @@ def refresh_token(
         httponly=True,
         max_age=settings.access_token_expire_minutes * 60,
         expires=settings.access_token_expire_minutes * 60,
-        samesite="lax",
-        secure=False,
+        samesite="lax" if settings.env == "production" else "lax",
+        secure=True if settings.env == "production" else False,
+        path="/"
     )
     
     return {
@@ -318,6 +321,6 @@ def refresh_token(
 
 @router.post("/logout", response_model=MessageResponse)
 def logout(response: Response):
-    response.delete_cookie("access_token")
-    response.delete_cookie("refresh_token")
+    response.delete_cookie("access_token", path="/")
+    response.delete_cookie("refresh_token", path="/")
     return {"message": "Logged out successfully"}
