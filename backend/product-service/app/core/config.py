@@ -15,6 +15,10 @@ class Settings(BaseSettings):
     # External Service URLs (Using ALB for Production)
     inventory_service_url: str = "http://velora-auth-alb-1482335493.ap-south-1.elb.amazonaws.com/api/v1/inventory"
 
+    # S3 Settings
+    s3_bucket_name: str = "velora-media-storage-ap-south-1"
+    aws_region: str = "ap-south-1"
+
     # Database settings
     db_host: str
     db_port: int

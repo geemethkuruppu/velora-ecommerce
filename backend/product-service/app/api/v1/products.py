@@ -35,24 +35,36 @@ router = APIRouter(prefix="/products", tags=["Products"])
 class MediaUploadResponse(MessageResponse):
     url: str
 
+import boto3
+from botocore.exceptions import ClientError
+
 @router.post("/upload-media", response_model=MediaUploadResponse)
 def upload_media(file: UploadFile = File(...), _=Depends(require_admin)):
-    """Upload a product media file"""
+    """Upload a product media file to S3"""
     allowed_types = ["image/jpeg", "image/png", "image/webp", "image/gif"]
     if file.content_type not in allowed_types:
         raise HTTPException(status_code=400, detail="Invalid file type. Only images are allowed.")
 
     # Generate unique filename
     file_extension = os.path.splitext(file.filename)[1]
-    unique_filename = f"{uuid.uuid4()}{file_extension}"
-    file_path = f"uploads/products/{unique_filename}"
+    unique_filename = f"products/{uuid.uuid4()}{file_extension}"
+    
+    # Initialize S3 client
+    s3_client = boto3.client('s3', region_name=settings.aws_region)
+    
+    try:
+        # Upload to S3
+        s3_client.upload_fileobj(
+            file.file,
+            settings.s3_bucket_name,
+            unique_filename,
+            ExtraArgs={'ContentType': file.content_type}
+        )
+    except ClientError as e:
+        raise HTTPException(status_code=500, detail=f"S3 Upload failed: {str(e)}")
 
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-
-    # Return full URL (assuming localhost:8001 for now, in prod use env const)
-    base_url = "http://localhost:8001"
-    url = f"{base_url}/{file_path}"
+    # Construct the public S3 URL
+    url = f"https://{settings.s3_bucket_name}.s3.{settings.aws_region}.amazonaws.com/{unique_filename}"
     
     return {"message": "File uploaded successfully", "url": url}
 
