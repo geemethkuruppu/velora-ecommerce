@@ -12,8 +12,15 @@ const CategoryManagement = ({
     onDeleteCategory
 }) => {
     const fileInputRef = useRef(null);
-    const [uploading, setUploading] = useState(false);
     const [localPreview, setLocalPreview] = useState(null);
+    const [uploading, setUploading] = useState(false);
+
+    // Reset local preview when modal closes or categoryData is reset
+    React.useEffect(() => {
+        if (!isOpen || (!categoryData.name && !categoryData.image_url)) {
+            setLocalPreview(null);
+        }
+    }, [isOpen, categoryData.name, categoryData.image_url]);
 
     if (!isOpen) return null;
 
@@ -167,11 +174,11 @@ const CategoryManagement = ({
                                         className="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-xl hover:border-primary/20 transition-all group"
                                     >
                                         <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 rounded-xl bg-primary/10 overflow-hidden flex items-center justify-center">
+                                            <div className="w-12 h-12 rounded-xl bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center shadow-inner">
                                                 {category.image_url ? (
-                                                    <img src={category.image_url} alt={category.name} className="w-full h-full object-cover" />
+                                                    <img src={category.image_url} alt={category.name} className="max-w-full max-h-full object-contain" />
                                                 ) : (
-                                                    <Tag size={18} className="text-primary" />
+                                                    <Tag size={18} className="text-primary/40" />
                                                 )}
                                             </div>
                                             <div className="flex-1">
