@@ -26,9 +26,12 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
 
         # 7. Disable Caching for API Security
-        # Critical for CloudFront to avoid caching CORS headers or 401 responses
+        # Critical for CloudFront to avoid caching        # Disable Caching for API Security
         response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
         response.headers["Pragma"] = "no-cache"
         response.headers["Expires"] = "0"
+        
+        # Force CloudFront to respect CORS variations
+        response.headers["Vary"] = "Origin"
         
         return response

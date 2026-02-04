@@ -10,6 +10,7 @@ from app.core.limiter import limiter
 from app.api.v1.auth import router as auth_router
 from app.core.logging_utils import setup_logging, CorrelationIdMiddleware
 from app.core.security_utils import SecurityHeadersMiddleware
+from app.api.v1.debug_cors import router as debug_cors_router
 
 app = FastAPI(
     title=settings.app_name,
@@ -50,3 +51,4 @@ def health_check():
     }
 
 app.include_router(auth_router, prefix="/api/v1")
+app.include_router(debug_cors_router, prefix="/api/v1")
