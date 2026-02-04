@@ -25,15 +25,24 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 # Add Correlation ID Middleware
 app.add_middleware(CorrelationIdMiddleware)
 
-# Add Security Headers Middleware
-# app.add_middleware(SecurityHeadersMiddleware)
+# Custom CORS Fallback (Ensures headers are present even if CORSMiddleware is bypassed)
+@app.middleware("http")
+async def cors_fallback(request: Request, call_next):
+    origin = request.headers.get("origin")
+    response = await call_next(request)
+    if origin in settings.cors_origins:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+    return response
 
-# CORS Middleware configuration - Add LAST to be outermost
+# CORS Middleware configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins + ["*"] if settings.env == "development" else settings.cors_origins,
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
