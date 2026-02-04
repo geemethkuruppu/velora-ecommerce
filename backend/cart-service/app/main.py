@@ -18,17 +18,26 @@ setup_logging(settings.app_name)
 # Add Correlation ID Middleware
 app.add_middleware(CorrelationIdMiddleware)
 
-# Custom CORS Fallback (Ensures headers are present even if CORSMiddleware is bypassed)
+# Consistently handle CORS for all requests (Same-Origin and Cross-Origin)
 @app.middleware("http")
-async def cors_fallback(request: Request, call_next):
+async def cors_handler(request: Request, call_next):
     origin = request.headers.get("origin")
-    response = await call_next(request)
-    if origin in settings.cors_origins:
-        response.headers["Access-Control-Allow-Origin"] = origin
-        response.headers["Access-Control-Allow-Credentials"] = "true"
-        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
-        response.headers["Access-Control-Allow-Headers"] = "*"
+    
+    if request.method == "OPTIONS":
+        response = Response()
+    else:
+        response = await call_next(request)
+
+    if origin:
+        if any(allowed_origin in origin for allowed_origin in settings.cors_origins):
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+            response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+            response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With, Cookie"
+            response.headers["Access-Control-Expose-Headers"] = "Set-Cookie"
+
     return response
+
 
 # Add Security Headers Middleware
 # app.add_middleware(SecurityHeadersMiddleware)
@@ -36,14 +45,8 @@ async def cors_fallback(request: Request, call_next):
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# CORS Middleware configuration
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.cors_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# Standard CORS Middleware removed to prevent conflict with Gateway/Custom Middleware
+# app.add_middleware(CORSMiddleware, ...)
 
 # Create tables
 Base.metadata.create_all(bind=engine)
