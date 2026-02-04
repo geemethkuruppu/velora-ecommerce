@@ -783,16 +783,33 @@ const Products = () => {
                                                                 <MinusCircle size={16} />
                                                             </button>
 
-                                                            {(med.media_url || med.localPreview) && med.media_type === 'image' && (
-                                                                <div className="w-full h-32 rounded-2xl overflow-hidden bg-white border border-gray-100 flex items-center justify-center shadow-inner relative">
-                                                                    <img src={med.localPreview || med.media_url} alt="Preview" className="max-h-full max-w-full object-contain p-2" />
-                                                                    {med.isUploading && (
-                                                                        <div className="absolute inset-0 bg-white/60 flex items-center justify-center">
-                                                                            <Loader2 className="animate-spin text-primary" size={24} />
+                                                            <div className="w-full h-32 rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 flex items-center justify-center shadow-inner relative group/preview">
+                                                                {med.media_type === 'video' ? (
+                                                                    med.media_url ? (
+                                                                        <video src={med.media_url} className="max-h-full max-w-full" />
+                                                                    ) : (
+                                                                        <div className="flex flex-col items-center gap-1 text-text-muted opacity-40">
+                                                                            <UploadCloud size={24} />
+                                                                            <span className="text-[10px] font-bold uppercase">Video Feed</span>
                                                                         </div>
-                                                                    )}
-                                                                </div>
-                                                            )}
+                                                                    )
+                                                                ) : (
+                                                                    (med.media_url || med.localPreview) ? (
+                                                                        <img src={med.localPreview || med.media_url} alt="Preview" className="max-h-full max-w-full object-contain p-2 transition-transform group-hover/preview:scale-105" />
+                                                                    ) : (
+                                                                        <div className="flex flex-col items-center gap-1 text-text-muted opacity-40">
+                                                                            <ImageIcon size={24} />
+                                                                            <span className="text-[10px] font-bold uppercase">No Image</span>
+                                                                        </div>
+                                                                    )
+                                                                )}
+                                                                
+                                                                {med.isUploading && (
+                                                                    <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center">
+                                                                        <Loader2 className="animate-spin text-primary" size={24} />
+                                                                    </div>
+                                                                )}
+                                                            </div>
 
                                                             <div className="space-y-3">
                                                                 <label className="text-[8px] font-extrabold text-text-muted uppercase tracking-wider ml-1">Asset Upload</label>
