@@ -33,10 +33,6 @@ class Settings(BaseSettings):
     
     # CORS
     cors_origins: list[str] = [
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:5174",
-        "http://127.0.0.1:5174",
         "http://velora-customer-app.s3-website.ap-south-1.amazonaws.com",
         "http://d2h62r2viksjq5.cloudfront.net",
         "https://d2h62r2viksjq5.cloudfront.net",

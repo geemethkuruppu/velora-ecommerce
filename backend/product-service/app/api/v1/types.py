@@ -5,7 +5,7 @@ from app.db.deps import get_db
 from app.schemas.product import TypeCreate, TypeResponse
 from app.models.product import Type, Product
 
-router = APIRouter()
+router = APIRouter(prefix="/products", tags=["Types"])
 
 
 @router.get("/types", response_model=List[TypeResponse])

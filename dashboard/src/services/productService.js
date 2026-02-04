@@ -44,17 +44,17 @@ export const productService = {
     },
 
     getTypes: async (filters = {}) => {
-        const response = await api.get(`${SERVICE_URL}/types`, { params: filters });
+        const response = await api.get(`${SERVICE_URL}/products/types`, { params: filters });
         return response.data;
     },
 
     createType: async (typeData) => {
-        const response = await api.post(`${SERVICE_URL}/types`, typeData);
+        const response = await api.post(`${SERVICE_URL}/products/types`, typeData);
         return response.data;
     },
 
     deleteType: async (id) => {
-        const response = await api.delete(`${SERVICE_URL}/types/${id}`);
+        const response = await api.delete(`${SERVICE_URL}/products/types/${id}`);
         if (response.status === 204) return null;
         return response.data;
     },
