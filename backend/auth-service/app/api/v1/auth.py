@@ -324,3 +324,16 @@ def logout(response: Response):
     response.delete_cookie("access_token", path="/")
     response.delete_cookie("refresh_token", path="/")
     return {"message": "Logged out successfully"}
+
+
+@router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_me(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    GDPR Compliance: Right to be Forgotten.
+    Permanently deletes the authenticated user's account.
+    """
+    delete_user(db, current_user.id)
+    return None
