@@ -30,7 +30,7 @@ app.add_middleware(SecurityHeadersMiddleware)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# CORS Middleware configuration
+# Standard CORS Middleware (Handles Pre-flight)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
@@ -38,6 +38,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Custom Dynamic Logic (Mirrors Origin for CloudFront)
+from app.core.middleware import DynamicCORSMiddleware
+app.add_middleware(DynamicCORSMiddleware)
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
