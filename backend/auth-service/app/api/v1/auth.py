@@ -68,7 +68,7 @@ def login(request: Request, payload: UserLogin, response: Response, db: Session 
         httponly=True,
         max_age=settings.access_token_expire_minutes * 60,
         expires=settings.access_token_expire_minutes * 60,
-        samesite="lax" if settings.env == "production" else "lax",
+        samesite="none" if settings.env == "production" else "lax",
         secure=True if settings.env == "production" else False,
         path="/"
     )
@@ -79,7 +79,7 @@ def login(request: Request, payload: UserLogin, response: Response, db: Session 
         httponly=True,
         max_age=settings.refresh_token_expire_days * 24 * 60 * 60,
         expires=settings.refresh_token_expire_days * 24 * 60 * 60,
-        samesite="lax" if settings.env == "production" else "lax",
+        samesite="none" if settings.env == "production" else "lax",
         secure=True if settings.env == "production" else False,
         path="/"
     )
@@ -299,7 +299,7 @@ def refresh_token(
         httponly=True,
         max_age=settings.access_token_expire_minutes * 60,
         expires=settings.access_token_expire_minutes * 60,
-        samesite="lax" if settings.env == "production" else "lax",
+        samesite="none" if settings.env == "production" else "lax",
         secure=True if settings.env == "production" else False,
         path="/"
     )
