@@ -32,6 +32,9 @@ class Settings(BaseSettings):
         "https://d2h62r2viksjq5.cloudfront.net",
         "https://d2dnnb0ijn36mw.cloudfront.net",
     ]
+
+    # Database Read Replica (Optional for Scale/DR)
+    db_read_replica_host: str | None = None
     
     # External Service URLs (Using ALB for Production)
     auth_service_url: str = "http://velora-auth-alb-1482335493.ap-south-1.elb.amazonaws.com/api/v1/auth"

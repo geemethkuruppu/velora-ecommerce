@@ -23,6 +23,18 @@ engine = create_engine(
     pool_pre_ping=True
 )
 
+# Disaster Recovery / Read Scaling Support
+# If a Read Replica is configured (e.g. RDS Global Database Replica), 
+# we create a separate engine for read-only operations.
+replica_engine = None
+if settings.db_read_replica_host:
+    REPLICA_URL = DATABASE_URL.replace(settings.db_host, settings.db_read_replica_host)
+    replica_engine = create_engine(
+        REPLICA_URL,
+        pool_size=settings.db_pool_size,
+        pool_pre_ping=True
+    )
+
 SessionLocal = sessionmaker(
     autocommit=False,
     autoflush=False,
