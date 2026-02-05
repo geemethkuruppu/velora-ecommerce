@@ -42,7 +42,7 @@ import boto3
 from botocore.exceptions import ClientError
 
 @router.post("/upload-media", response_model=MediaUploadResponse)
-def upload_media(file: UploadFile = File(...), _=Depends(require_admin)):
+async def upload_media(file: UploadFile = File(...), _=Depends(require_admin)):
     """Upload a product media file to S3"""
     allowed_types = ["image/jpeg", "image/png", "image/webp", "image/gif"]
     if file.content_type not in allowed_types:
