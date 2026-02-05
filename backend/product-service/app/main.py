@@ -27,11 +27,7 @@ setup_logging(settings.app_name)
 # Add Correlation ID Middleware
 app.add_middleware(CorrelationIdMiddleware)
 
-# Consistently handle CORS for all requests (Same-Origin and Cross-Origin)
-# Add Security Headers Middleware
-app.add_middleware(SecurityHeadersMiddleware)
-
-# Standard CORS Middleware (Handles Pre-flight)
+# Outermost Middleware: Standard CORS (Handles Pre-flight)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
@@ -44,6 +40,9 @@ app.add_middleware(
 # Custom Dynamic Logic (Mirrors Origin for CloudFront)
 from app.core.middleware import DynamicCORSMiddleware
 app.add_middleware(DynamicCORSMiddleware)
+
+# Security Headers (Applied after CORS)
+app.add_middleware(SecurityHeadersMiddleware)
 
 
 # Add Security Headers Middleware
@@ -74,6 +73,14 @@ app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 # app.add_middleware(CORSMiddleware, ...)
 
 Base.metadata.create_all(bind=engine)
+
+@app.options("/{rest_of_path:path}")
+async def preflight_handler(request: Request, rest_of_path: str):
+    """
+    Explicit OPTIONS handler to ensure preflight requests always succeed.
+    Middleware will handle actual header injection.
+    """
+    return Response(status_code=200)
 
 @app.get("/health")
 def health_check():

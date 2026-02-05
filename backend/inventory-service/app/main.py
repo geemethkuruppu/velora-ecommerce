@@ -24,13 +24,7 @@ setup_logging(settings.app_name)
 # Add Correlation ID Middleware
 app.add_middleware(CorrelationIdMiddleware)
 
-# Add Security Headers Middleware
-app.add_middleware(SecurityHeadersMiddleware)
-
-app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
-
-# Standard CORS Middleware (Handles Pre-flight)
+# Outermost Middleware: Standard CORS (Handles Pre-flight)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
@@ -43,8 +37,19 @@ app.add_middleware(
 from app.core.middleware import DynamicCORSMiddleware
 app.add_middleware(DynamicCORSMiddleware)
 
+# Security Headers (Applied after CORS)
+app.add_middleware(SecurityHeadersMiddleware)
+
 # Create database tables
 Base.metadata.create_all(bind=engine)
+
+@app.options("/{rest_of_path:path}")
+async def preflight_handler(request: Request, rest_of_path: str):
+    """
+    Explicit OPTIONS handler to ensure preflight requests always succeed.
+    Middleware will handle actual header injection.
+    """
+    return Response(status_code=200)
 
 @app.get("/health")
 def health_check():
