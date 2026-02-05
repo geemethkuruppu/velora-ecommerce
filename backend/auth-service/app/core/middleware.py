@@ -16,14 +16,14 @@ class DynamicCORSMiddleware(BaseHTTPMiddleware):
         
         # Dynamic Origin matching logic
         if origin and origin in settings.cors_origins:
-            # Explicitly set the Allow-Origin to the REQUESTING origin
-            # This prevents CloudFront "Static Header" caching issues.
+            # Mirror the origin to ensure CloudFront forwards it correctly
             response.headers["Access-Control-Allow-Origin"] = origin
             response.headers["Access-Control-Allow-Credentials"] = "true"
-            response.headers["Access-Control-Allow-Methods"] = "*"
-            response.headers["Access-Control-Allow-Headers"] = "*"
             
-            # CRITICAL: Tell CloudFront to vary cache based on Origin
-            response.headers["Vary"] = "Origin"
+            # Ensure Vary: Origin is present for caching safety
+            if "Vary" not in response.headers:
+                response.headers["Vary"] = "Origin"
+            elif "Origin" not in response.headers["Vary"]:
+                response.headers["Vary"] = f"{response.headers['Vary']}, Origin"
             
         return response

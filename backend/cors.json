@@ -1,0 +1,20 @@
+{
+    "AllowOrigins": [
+        "https://d2h62r2viksjq5.cloudfront.net",
+        "https://d2dnnb0ijn36mw.cloudfront.net",
+        "http://localhost:5173"
+    ],
+    "AllowMethods": [
+        "GET",
+        "POST",
+        "PUT",
+        "DELETE",
+        "OPTIONS"
+    ],
+    "AllowHeaders": [
+        "Authorization",
+        "Content-Type",
+        "Origin"
+    ],
+    "AllowCredentials": true
+}

@@ -41,6 +41,10 @@ yarn-error.log
 .env.test.local
 .env.production.local
 .env.*
+backend/*/.env
+customer/.env
+dashboard/.env
+**/ .env
 
 # IDEs
 .vscode/
