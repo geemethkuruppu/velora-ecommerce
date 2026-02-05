@@ -31,7 +31,7 @@ app.add_middleware(CorrelationIdMiddleware)
 # Add Security Headers Middleware
 app.add_middleware(SecurityHeadersMiddleware)
 
-# Add CORS Middleware (Standard)
+# Standard CORS Middleware (Handles Pre-flight)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
@@ -40,6 +40,10 @@ app.add_middleware(
     allow_headers=["*"],
     expose_headers=["Set-Cookie", "Content-Disposition"]
 )
+
+# Custom Dynamic Logic (Mirrors Origin for CloudFront)
+from app.core.middleware import DynamicCORSMiddleware
+app.add_middleware(DynamicCORSMiddleware)
 
 
 # Add Security Headers Middleware
