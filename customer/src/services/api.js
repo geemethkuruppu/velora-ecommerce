@@ -4,6 +4,16 @@ const api = axios.create({
     withCredentials: true, // Necessary for httpOnly cookies
 });
 
+// Inject Bearer Token for Cross-Domain Auth
+api.interceptors.request.use((config) => {
+    console.log('Attaching Token to Request');
+    const token = localStorage.getItem('customer_token');
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+});
+
 // Response Interceptor: Handle Token Refresh & Error Formatting
 api.interceptors.response.use(
     (response) => response,
@@ -24,7 +34,14 @@ api.interceptors.response.use(
             try {
                 const AUTH_URL = import.meta.env.VITE_AUTH_URL;
                 if (!AUTH_URL) throw new Error('AUTH_URL not configured');
-                await axios.post(`${AUTH_URL}/refresh`, {}, { withCredentials: true });
+                const refreshResponse = await axios.post(`${AUTH_URL}/refresh`, {}, { withCredentials: true });
+
+                // Update Local Token
+                if (refreshResponse.data?.access_token) {
+                    localStorage.setItem('customer_token', refreshResponse.data.access_token);
+                    originalRequest.headers.Authorization = `Bearer ${refreshResponse.data.access_token}`;
+                }
+
                 return api(originalRequest);
             } catch (refreshError) {
                 console.error('Session expired. Please log in again.');

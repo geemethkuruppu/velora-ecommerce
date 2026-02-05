@@ -41,7 +41,7 @@ export const AuthProvider = ({ children }) => {
             });
 
             console.log('✅ Dashboard: Login response data:', response.data);
-            const { user: userData } = response.data;
+            const { user: userData, access_token } = response.data;
 
             if (!userData) {
                 console.error('⚠️ Dashboard: Missing user object in login response:', response.data);
@@ -57,6 +57,11 @@ export const AuthProvider = ({ children }) => {
             if (!userData.is_active) {
                 await logout();
                 throw new Error('Access Suspended: Sorry, your account is not in active status.');
+            }
+
+            // Store Token for Header Usage
+            if (access_token) {
+                localStorage.setItem('auth_token', access_token);
             }
 
             setUser(userData);
@@ -75,6 +80,7 @@ export const AuthProvider = ({ children }) => {
         try {
             const logoutUrl = `${import.meta.env.VITE_AUTH_URL}/logout`;
             await api.post(logoutUrl);
+            localStorage.removeItem('auth_token');
         } catch (err) {
             console.error('Logout failed:', err);
         } finally {

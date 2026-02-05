@@ -1,21 +1,18 @@
-import boto3
 import json
+import sys
 
-def get_distribution_id(domain_name):
-    client = boto3.client('cloudfront')
-    paginator = client.get_paginator('list_distributions')
-    
-    for page in paginator.paginate():
-        if 'Items' in page['DistributionList']:
-            for dist in page['DistributionList']['Items']:
-                if domain_name in dist['DomainName']:
-                    return dist['Id']
-    return None
+try:
+    with open('cf_dist.json', 'r', encoding='utf-16') as f:
+        data = json.load(f)
+except:
+    try:
+        with open('cf_dist.json', 'r', encoding='utf-8') as f:
+            data = json.load(f)
+    except:
+        print("Failed to read file")
+        sys.exit(1)
 
-if __name__ == "__main__":
-    target_domain = "d2dnnb0ijn36mw.cloudfront.net"
-    dist_id = get_distribution_id(target_domain)
-    if dist_id:
-        print(f"FOUND_ID: {dist_id}")
-    else:
-        print("ID_NOT_FOUND")
+for item in data['DistributionList']['Items']:
+    # Print all origins to see what we have
+    origins = [o['DomainName'] for o in item['Origins']['Items']]
+    print(f"Origins: {origins} -> ID: {item['Id']}")

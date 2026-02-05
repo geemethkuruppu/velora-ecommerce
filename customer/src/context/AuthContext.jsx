@@ -42,6 +42,10 @@ export const AuthProvider = ({ children }) => {
             // Auto-login after registration
             const loginData = await authService.login(email, password);
 
+            if (loginData.access_token) {
+                localStorage.setItem('customer_token', loginData.access_token);
+            }
+
             setUser(loginData.user);
             return loginData;
         } catch (err) {
@@ -62,6 +66,10 @@ export const AuthProvider = ({ children }) => {
 
             const data = await authService.login(email, password);
 
+            if (data.access_token) {
+                localStorage.setItem('customer_token', data.access_token);
+            }
+
             setUser(data.user);
             return data;
         } catch (err) {
@@ -78,6 +86,7 @@ export const AuthProvider = ({ children }) => {
     const logout = async () => {
         try {
             await authService.logout();
+            localStorage.removeItem('customer_token');
             setUser(null);
             setError(null);
         } catch (err) {

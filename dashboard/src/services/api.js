@@ -4,6 +4,17 @@ const api = axios.create({
     withCredentials: true,
 });
 
+console.log('✅ VELORA API Client v2 (Header Auth Enabled)');
+
+// Inject Bearer Token to bypass Third-Party Cookie blocking
+api.interceptors.request.use((config) => {
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+});
+
 api.interceptors.response.use(
     (response) => response,
     async (error) => {
@@ -20,7 +31,15 @@ api.interceptors.response.use(
 
             try {
                 const AUTH_URL = import.meta.env.VITE_AUTH_URL || 'http://localhost:8000/api/v1/auth';
-                await axios.post(`${AUTH_URL}/refresh`, {}, { withCredentials: true });
+                const refreshResponse = await axios.post(`${AUTH_URL}/refresh`, {}, { withCredentials: true });
+
+                // Update Local Token
+                if (refreshResponse.data?.access_token) {
+                    localStorage.setItem('auth_token', refreshResponse.data.access_token);
+                    // Update the failed request's header with new token
+                    originalRequest.headers.Authorization = `Bearer ${refreshResponse.data.access_token}`;
+                }
+
                 return api(originalRequest);
             } catch (refreshError) {
                 // Suppressed generic console error as it's often expected behavior (e.g. not logged in)
