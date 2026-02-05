@@ -26,12 +26,13 @@ from app.services.product_service import (
 from app.clients import inventory_client
 from app.api.deps import require_admin
 from app.core.config import settings
-import os
-import shutil
+import logging
 import uuid
 from app.core.limiter import limiter
 import boto3
 from botocore.exceptions import ClientError
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/products", tags=["Products"])
 
@@ -79,8 +80,7 @@ async def upload_media(file: UploadFile = File(...), _=Depends(require_admin)):
             settings.s3_bucket_name,
             unique_filename,
             ExtraArgs={
-                'ContentType': file.content_type,
-                'ACL': 'public-read'
+                'ContentType': file.content_type
             }
         )
     except ClientError as e:
