@@ -15,11 +15,13 @@ from app.core.logging_utils import correlation_id_ctx
 
 async def fetch_product_info(product_id: int) -> Optional[ProductInfo]:
     """Fetch product information from product-service"""
+    url = f"{settings.product_service_url}/products/{product_id}"
     try:
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                f"{settings.product_service_url}/products/{product_id}",
-                headers={"X-Correlation-ID": correlation_id_ctx.get() or ""}
+                url,
+                headers={"X-Correlation-ID": correlation_id_ctx.get() or ""},
+                timeout=5.0
             )
             if response.status_code == 200:
                 data = response.json()
@@ -31,8 +33,17 @@ async def fetch_product_info(product_id: int) -> Optional[ProductInfo]:
                     image=data.get('media', [{}])[0].get('media_url', '') if data.get('media') else '',
                     slug=data['slug']
                 )
+            else:
+                print(f"ERROR: Product Service returned {response.status_code} for product {product_id} at {url}")
+                if response.status_code == 429:
+                    print(f"CRITICAL: Rate limited by Product Service! Internal calls are being blocked.")
+                print(f"Response Detail: {response.text}")
+    except httpx.ConnectError:
+        print(f"CRITICAL ERROR: Could not connect to Product Service at {url}")
+    except httpx.TimeoutException:
+        print(f"ERROR: Timeout while fetching product {product_id} from {url}")
     except Exception as e:
-        print(f"Error fetching product {product_id}: {e}")
+        print(f"Error fetching product {product_id}: {type(e).__name__}: {e}")
     return None
 
 

@@ -26,7 +26,12 @@ const VerifyEmail = () => {
                 setMessage(response.data.message || 'Email verified successfully!');
             } catch (error) {
                 setStatus('error');
-                setMessage(error.response?.data?.detail || 'Verification failed. The link may be expired.');
+                const errorDetail = error.response?.data?.detail;
+                // Safeguard: Convert objects/arrays to string to prevent React "White Page" crash
+                const safeMessage = typeof errorDetail === 'string'
+                    ? errorDetail
+                    : JSON.stringify(errorDetail) || 'Verification failed. The link may be expired.';
+                setMessage(safeMessage);
             }
         };
 

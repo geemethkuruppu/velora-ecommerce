@@ -28,6 +28,7 @@ from app.api.deps import require_admin
 from app.core.config import settings
 import logging
 import uuid
+import os
 from app.core.limiter import limiter
 import boto3
 from botocore.exceptions import ClientError
@@ -100,7 +101,7 @@ async def create(payload: ProductCreate, db: Session = Depends(get_db), _=Depend
 
 
 @router.get("", response_model=list[ProductResponse])
-@limiter.limit("60/minute")
+@limiter.limit("120/minute")
 def list_all(request: Request, category_id: int | None = None, department: str | None = None, db: Session = Depends(get_db)):
     """List all active products, optionally filtered by category or department"""
     return list_products(db, category_id, department)
@@ -160,7 +161,7 @@ def delete_category(
 
 # Detail Endpoints (Keep at bottom to avoid shadowing)
 @router.get("/{product_id}", response_model=ProductResponse)
-@limiter.limit("500/minute")
+@limiter.limit("2000/minute")
 def get_one(request: Request, product_id: int, db: Session = Depends(get_db)):
     """Get a specific product with all details"""
     return get_product(db, product_id)
