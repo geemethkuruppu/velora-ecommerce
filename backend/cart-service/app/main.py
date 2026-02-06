@@ -60,7 +60,7 @@ async def preflight_handler(request: Request, rest_of_path: str):
 def health_check():
     return {"status": "running", "service": "cart-service", "port": 8005}
 
-@app.get("/debug-product/{product_id}")
+@app.get("/api/v1/cart/debug-product/{product_id}")
 async def debug_product(product_id: int):
     """Debug internal connectivity to product-service"""
     from app.services.cart_service import fetch_product_info
