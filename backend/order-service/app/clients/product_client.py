@@ -63,14 +63,20 @@ class ProductClient:
         """
         ProductClient._check_circuit()
 
-        async with httpx.AsyncClient(trust_env=False) as client:
+        # Robust URL construction: handle cases where base URL might already include '/products'
+        base_url = settings.product_service_url.rstrip('/')
+        if not base_url.endswith('/products'):
+            url = f"{base_url}/products/{product_id}"
+        else:
+            url = f"{base_url}/{product_id}"
+
+        async with httpx.AsyncClient(trust_env=False, follow_redirects=True) as client:
             try:
-                url = f"{PRODUCT_SERVICE_URL}/{product_id}"
                 logger.info(f"Attempting GET request to: {url}")
                 response = await client.get(
                     url,
                     headers=get_headers(),
-                    timeout=5.0
+                    timeout=10.0
                 )
                 logger.info(f"Response from Product Service: {response.status_code}")
                 

@@ -18,6 +18,14 @@ def get_headers():
 
 class InventoryClient:
     @staticmethod
+    def _get_url(path: str) -> str:
+        """Robust URL construction for Inventory Service"""
+        base_url = settings.inventory_service_url.rstrip('/')
+        if not base_url.endswith('/inventory'):
+            return f"{base_url}/inventory/{path.lstrip('/')}"
+        return f"{base_url}/{path.lstrip('/')}"
+
+    @staticmethod
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=2, max=10),
@@ -28,7 +36,7 @@ class InventoryClient:
         """
         Reserve stock for an order (Saga Step 1).
         """
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(follow_redirects=True) as client:
             try:
                 payload = {
                     "order_id": str(order_id),
@@ -36,11 +44,14 @@ class InventoryClient:
                     "quantity": quantity
                 }
                 
+                url = InventoryClient._get_url("reserve")
+                logger.info(f"Inventory: Attempting to reserve stock at {url}")
+                
                 response = await client.post(
-                    f"{INVENTORY_SERVICE_URL}/reserve", 
+                    url, 
                     json=payload,
                     headers=get_headers(),
-                    timeout=5.0
+                    timeout=10.0
                 )
                 
                 # Check for transient server errors (502, 503, 504) to trigger retry
@@ -74,13 +85,14 @@ class InventoryClient:
         Release stock (Saga Compensation).
         Called when order creation fails or is cancelled.
         """
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(follow_redirects=True) as client:
             try:
+                url = InventoryClient._get_url("release")
                 response = await client.post(
-                    f"{INVENTORY_SERVICE_URL}/release",
+                    url,
                     json={"order_id": str(order_id)},
                     headers=get_headers(),
-                    timeout=5.0
+                    timeout=10.0
                 )
                 
                 if response.status_code in [502, 503, 504]:
@@ -106,13 +118,14 @@ class InventoryClient:
         Confirm stock (Saga Completion).
         Called when order is successfully placed/paid.
         """
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(follow_redirects=True) as client:
             try:
+                url = InventoryClient._get_url("confirm")
                 response = await client.post(
-                    f"{INVENTORY_SERVICE_URL}/confirm",
+                    url,
                     json={"order_id": str(order_id)},
                     headers=get_headers(),
-                    timeout=5.0
+                    timeout=10.0
                 )
 
                 if response.status_code in [502, 503, 504]:
