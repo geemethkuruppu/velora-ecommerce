@@ -31,6 +31,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["Set-Cookie", "Content-Disposition"]
 )
 
 # Custom Dynamic Logic (Mirrors Origin for CloudFront)

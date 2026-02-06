@@ -26,10 +26,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 # Add Correlation ID Middleware
 app.add_middleware(CorrelationIdMiddleware)
 
-# Add Security Headers Middleware
-app.add_middleware(SecurityHeadersMiddleware)
-
-# Standard CORS Middleware (Handles Pre-flight)
+# 1. Standard CORS Middleware (Handles Pre-flight)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
@@ -39,10 +36,21 @@ app.add_middleware(
     expose_headers=["Set-Cookie", "Content-Disposition"]
 )
 
-# Custom Dynamic Logic (Mirrors Origin for CloudFront)
+# 2. Custom Dynamic Logic (Mirrors Origin for CloudFront)
 from app.core.middleware import DynamicCORSMiddleware
 app.add_middleware(DynamicCORSMiddleware)
 
+# 3. Security Headers Middleware (Applied last to protect response)
+app.add_middleware(SecurityHeadersMiddleware)
+
+
+@app.options("/{rest_of_path:path}")
+async def preflight_handler(request: Request, rest_of_path: str):
+    """
+    Explicit OPTIONS handler to ensure preflight requests always succeed.
+    Middleware will handle actual header injection.
+    """
+    return Response(status_code=200)
 
 
 Base.metadata.create_all(bind=engine)
