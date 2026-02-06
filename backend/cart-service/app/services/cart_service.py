@@ -15,7 +15,13 @@ from app.core.logging_utils import correlation_id_ctx
 
 async def fetch_product_info(product_id: int) -> Optional[ProductInfo]:
     """Fetch product information from product-service"""
-    url = f"{settings.product_service_url}/products/{product_id}"
+    # Robust URL construction: handle cases where base URL might already include '/products'
+    base_url = settings.product_service_url.rstrip('/')
+    if not base_url.endswith('/products'):
+        url = f"{base_url}/products/{product_id}"
+    else:
+        url = f"{base_url}/{product_id}"
+    
     print(f"DEBUG: Attempting to fetch product {product_id} from {url}")
     try:
         async with httpx.AsyncClient(follow_redirects=True) as client:
