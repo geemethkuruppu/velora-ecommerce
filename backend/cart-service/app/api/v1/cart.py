@@ -14,20 +14,6 @@ from app.core.limiter import limiter
 router = APIRouter(prefix="/cart", tags=["cart"])
 
 
-@router.get("/debug-product/{product_id}")
-async def debug_product(product_id: int):
-    """Debug internal connectivity to product-service"""
-    from app.services.cart_service import fetch_product_info
-    from app.core.config import settings
-    info = await fetch_product_info(product_id)
-    return {
-        "product_id": product_id,
-        "product_service_url": settings.product_service_url,
-        "product_info": info if info else "FETCH_FAILED",
-        "instructions": "Check CloudWatch logs for 'DEBUG' messages to see the exact status code and error."
-    }
-
-
 @router.get("", response_model=CartResponse)
 async def get_cart(
     user_id: int = Depends(get_current_user_id),
