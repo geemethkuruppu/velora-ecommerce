@@ -60,4 +60,16 @@ async def preflight_handler(request: Request, rest_of_path: str):
 def health_check():
     return {"status": "running", "service": "cart-service", "port": 8005}
 
+@app.get("/debug-product/{product_id}")
+async def debug_product(product_id: int):
+    """Debug internal connectivity to product-service"""
+    from app.services.cart_service import fetch_product_info
+    info = await fetch_product_info(product_id)
+    return {
+        "product_id": product_id,
+        "product_service_url": settings.product_service_url,
+        "product_info": info if info else "FETCH_FAILED",
+        "instructions": "Check CloudWatch logs for 'DEBUG' messages to see the exact status code and error."
+    }
+
 app.include_router(cart_router, prefix="/api/v1")

@@ -16,13 +16,15 @@ from app.core.logging_utils import correlation_id_ctx
 async def fetch_product_info(product_id: int) -> Optional[ProductInfo]:
     """Fetch product information from product-service"""
     url = f"{settings.product_service_url}/products/{product_id}"
+    print(f"DEBUG: Attempting to fetch product {product_id} from {url}")
     try:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(follow_redirects=True) as client:
             response = await client.get(
                 url,
                 headers={"X-Correlation-ID": correlation_id_ctx.get() or ""},
-                timeout=5.0
+                timeout=10.0
             )
+            print(f"DEBUG: Product Service Response Code: {response.status_code}")
             if response.status_code == 200:
                 data = response.json()
                 # Transform to match ProductInfo schema
