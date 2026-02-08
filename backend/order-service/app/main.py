@@ -65,4 +65,4 @@ def health_check():
 # Include Routers
 # Trigger Deployment
 app.include_router(orders_router, prefix="/api/v1")
-app.include_router(events_router, prefix="/api/v1")
+app.include_router(events_router, prefix="/api/v1/orders")

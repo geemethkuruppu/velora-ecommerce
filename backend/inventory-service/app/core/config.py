@@ -42,7 +42,7 @@ class Settings(BaseSettings):
     admin_email: str = "geemeth@velora.com" # Default admin to alert
 
     # External Service URLs (Using ALB for Production)
-    order_service_url: str = "http://velora-auth-alb-1482335493.ap-south-1.elb.amazonaws.com/api/v1"
+    order_service_url: str = "http://velora-auth-alb-1482335493.ap-south-1.elb.amazonaws.com/api/v1/orders"
     product_service_url: str = "http://velora-auth-alb-1482335493.ap-south-1.elb.amazonaws.com/api/v1"
 
     class Config:
