@@ -29,7 +29,7 @@ const Category3DSlider = ({ department = 'Womenswear', onCategorySelect }) => {
                 const categoriesWithImages = data.map((cat, idx) => ({
                     id: cat.id,
                     name: cat.name,
-                    image: fallbackImages[idx % fallbackImages.length]
+                    image: cat.image_url || fallbackImages[idx % fallbackImages.length]
                 }));
                 setCategories(categoriesWithImages);
             } catch (error) {

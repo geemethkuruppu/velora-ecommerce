@@ -399,8 +399,22 @@ const Products = () => {
                                 <tr key={product.id} className="border-b border-gray-100 hover:bg-slate-50/50 transition-colors group bg-white">
                                     <td className="px-6 py-5">
                                         <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 bg-primary/5 border border-primary/10 rounded-2xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all duration-300">
-                                                <Package size={20} />
+                                            <div className="w-12 h-12 bg-primary/5 border border-primary/10 rounded-2xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all duration-300 overflow-hidden">
+                                                {product.media?.find(m => m.is_primary)?.media_url ? (
+                                                    <img
+                                                        src={product.media.find(m => m.is_primary).media_url}
+                                                        alt={product.name}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                ) : product.media?.[0]?.media_url ? (
+                                                    <img
+                                                        src={product.media[0].media_url}
+                                                        alt={product.name}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <Package size={20} />
+                                                )}
                                             </div>
                                             <div>
                                                 <p className="text-sm font-bold text-primary tracking-tight">{product.name}</p>
@@ -803,7 +817,7 @@ const Products = () => {
                                                                         </div>
                                                                     )
                                                                 )}
-                                                                
+
                                                                 {med.isUploading && (
                                                                     <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center">
                                                                         <Loader2 className="animate-spin text-primary" size={24} />

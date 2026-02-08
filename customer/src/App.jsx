@@ -11,6 +11,7 @@ import Profile from './pages/Profile';
 import MyOrders from './pages/MyOrders';
 import MyCart from './pages/MyCart';
 import Checkout from './pages/Checkout';
+import ProductDetail from './pages/ProductDetail';
 import Footer from './components/Footer';
 import Loading from './components/Loading';
 
@@ -43,6 +44,7 @@ function App() {
             <Route path="/my-orders" element={<MyOrders />} />
             <Route path="/my-cart" element={<MyCart />} />
             <Route path="/checkout" element={<Checkout />} />
+            <Route path="/product/:id" element={<ProductDetail />} />
           </Routes>
         </div>
       </CartProvider>

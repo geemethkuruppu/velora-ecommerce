@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { ShoppingBag, Loader2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
@@ -7,6 +8,7 @@ import LoginModal from './LoginModal';
 import toast, { Toaster } from 'react-hot-toast';
 
 const ProductArchCard = ({ product, index }) => {
+    const navigate = useNavigate();
     const { isAuthenticated } = useAuth();
     const { addToCart, mergeCart } = useCart();
     const [showLoginModal, setShowLoginModal] = useState(false);
@@ -97,6 +99,7 @@ const ProductArchCard = ({ product, index }) => {
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1, duration: 0.6 }}
                 className="group cursor-pointer flex flex-col items-center"
+                onClick={() => navigate(`/product/${product.id}`)}
             >
                 {/* Arch Niche Container - The Wall Cutout */}
                 <div className="relative w-full aspect-[3/4] rounded-t-[100px] bg-gray-200 shadow-[inset_0_10px_20px_rgba(0,0,0,0.2)] z-10 overflow-hidden">
@@ -107,7 +110,7 @@ const ProductArchCard = ({ product, index }) => {
                     {/* Product Image Container - Slightly recessed */}
                     <div className="absolute inset-2 top-4 rounded-t-[90px] overflow-hidden bg-white shadow-sm">
                         <img
-                            src={product.image}
+                            src={product.image || product.media?.find(m => m.is_primary)?.media_url || product.media?.[0]?.media_url}
                             alt={product.name}
                             className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
                         />
@@ -118,7 +121,10 @@ const ProductArchCard = ({ product, index }) => {
 
                     {/* Add to Bag Button - Floating */}
                     <button
-                        onClick={handleAddToBag}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            handleAddToBag();
+                        }}
                         disabled={isAdding}
                         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-6 py-3 bg-white/90 backdrop-blur-sm text-gray-900 text-xs uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all duration-300 z-30 hover:bg-white shadow-lg translate-y-4 group-hover:translate-y-[-50%] flex items-center gap-2 disabled:opacity-50"
                     >
@@ -147,7 +153,9 @@ const ProductArchCard = ({ product, index }) => {
                         <h3 className="text-gray-900 font-serif text-lg mb-1 group-hover:text-[#4A3B69] transition-colors">
                             {product.name}
                         </h3>
-                        <p className="text-gray-500 tracking-wider text-sm font-medium">{product.price}</p>
+                        <p className="text-gray-500 tracking-wider text-sm font-medium">
+                            {new Intl.NumberFormat('en-US', { style: 'currency', currency: product.currency || 'USD' }).format(product.base_price)}
+                        </p>
                     </div>
                 </div>
             </motion.div>
