@@ -40,31 +40,10 @@ router = APIRouter(prefix="/products", tags=["Products"])
 class MediaUploadResponse(MessageResponse):
     url: str
 
-import boto3
-from botocore.exceptions import ClientError
-
-@router.post("/upload-media", response_model=MediaUploadResponse)
-async def upload_media(file: UploadFile = File(...), _=Depends(require_admin)):
-    """Upload a product media file to S3"""
-    allowed_types = ["image/jpeg", "image/png", "image/webp", "image/gif"]
-    if file.content_type not in allowed_types:
-        raise HTTPException(status_code=400, detail="Invalid file type. Only images are allowed.")
-
-    # Generate unique filename
-    file_extension = os.path.splitext(file.filename)[1]
-    unique_filename = f"products/{uuid.uuid4()}{file_extension}"
-    
-    # Initialize S3 client
-    s3_client = boto3.client('s3', region_name=settings.aws_region)
-    
-    try:
-        # Ensure file pointer is at the start
-        # Binary Integrity Check: Verify file signature
-        header = await file.read(4)
-        await file.seek(0)
-        
-        # Common image headers: JPEG (FF D8 FF), PNG (89 50 4E 47), GIF (47 49 46 38)
-        if not (header.startswith(b'\xff\xd8\xff') or header.startswith(b'\x89PNG') or header.startswith(b'GIF8')):
+        if not (header.startswith(b'\xff\xd8\xff') or # JPEG
+                header.startswith(b'\x89PNG') or     # PNG
+                header.startswith(b'GIF8') or        # GIF
+                header.startswith(b'RIFF')):        # WebP (RIFF container)
             logger.error(f"Binary Integrity Check FAILED. Header: {header.hex()}")
             raise HTTPException(
                 status_code=400,
