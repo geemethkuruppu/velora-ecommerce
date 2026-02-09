@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 30
     
     # External Service URLs (Using ALB for Production)
-    product_service_url: str = "http://velora-auth-alb-1482335493.ap-south-1.elb.amazonaws.com/api/v1"
+    product_service_url: str = "http://velora-prod-alb-1368791126.ap-south-1.elb.amazonaws.com/api/v1"
     
     # Database settings
     db_host: str

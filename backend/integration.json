@@ -2,6 +2,6 @@
     "ApiId": "yto1thkib4",
     "IntegrationType": "HTTP_PROXY",
     "IntegrationMethod": "ANY",
-    "IntegrationUri": "http://velora-auth-alb-1482335493.ap-south-1.elb.amazonaws.com/{proxy}",
+    "IntegrationUri": "http://velora-prod-alb-1368791126.ap-south-1.elb.amazonaws.com/{proxy}",
     "PayloadFormatVersion": "1.0"
 }

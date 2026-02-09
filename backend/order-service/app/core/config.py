@@ -37,9 +37,9 @@ class Settings(BaseSettings):
     db_read_replica_host: str | None = None
     
     # External Service URLs (Using ALB for Production)
-    auth_service_url: str = "http://velora-auth-alb-1482335493.ap-south-1.elb.amazonaws.com/api/v1"
-    inventory_service_url: str = "http://velora-auth-alb-1482335493.ap-south-1.elb.amazonaws.com/api/v1/inventory"
-    product_service_url: str = "http://velora-auth-alb-1482335493.ap-south-1.elb.amazonaws.com/api/v1"
+    auth_service_url: str = "http://velora-prod-alb-1368791126.ap-south-1.elb.amazonaws.com/api/v1"
+    inventory_service_url: str = "http://velora-prod-alb-1368791126.ap-south-1.elb.amazonaws.com/api/v1/inventory"
+    product_service_url: str = "http://velora-prod-alb-1368791126.ap-south-1.elb.amazonaws.com/api/v1"
     
     # Email
     smtp_host: str = "smtp.gmail.com"
