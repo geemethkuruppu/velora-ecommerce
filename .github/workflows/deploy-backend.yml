@@ -9,7 +9,7 @@ on:
 env:
   AWS_REGION: ap-south-1
   ECR_REPOSITORY_PREFIX: 475583545270.dkr.ecr.ap-south-1.amazonaws.com
-  ECS_CLUSTER: velora-backend-cluster-v2
+  ECS_CLUSTER: velora-prod-cluster
 
 permissions:
   contents: read
@@ -54,7 +54,7 @@ jobs:
     - name: Update ECS Service
       if: steps.changes.outputs.src == 'true'
       run: |
-        aws ecs update-service --cluster ${{ env.ECS_CLUSTER }} --service velora-auth-service --force-new-deployment
+        aws ecs update-service --cluster ${{ env.ECS_CLUSTER }} --service velora-auth-service-prod --force-new-deployment
 
   # ORDER SERVICE
   order-service:
@@ -95,7 +95,7 @@ jobs:
     - name: Update ECS Service
       if: steps.changes.outputs.src == 'true'
       run: |
-        aws ecs update-service --cluster ${{ env.ECS_CLUSTER }} --service velora-order-service --force-new-deployment
+        aws ecs update-service --cluster ${{ env.ECS_CLUSTER }} --service velora-order-service-prod --force-new-deployment
 
   # PRODUCT SERVICE
   product-service:
@@ -136,7 +136,7 @@ jobs:
     - name: Update ECS Service
       if: steps.changes.outputs.src == 'true'
       run: |
-        aws ecs update-service --cluster ${{ env.ECS_CLUSTER }} --service velora-product-service --force-new-deployment
+        aws ecs update-service --cluster ${{ env.ECS_CLUSTER }} --service velora-product-service-prod --force-new-deployment
 
   # INVENTORY SERVICE
   inventory-service:
@@ -177,7 +177,7 @@ jobs:
     - name: Update ECS Service
       if: steps.changes.outputs.src == 'true'
       run: |
-        aws ecs update-service --cluster ${{ env.ECS_CLUSTER }} --service velora-inventory-service --force-new-deployment
+        aws ecs update-service --cluster ${{ env.ECS_CLUSTER }} --service velora-inventory-service-prod --force-new-deployment
   # CART SERVICE
   cart-service:
     runs-on: ubuntu-latest
@@ -217,4 +217,4 @@ jobs:
     - name: Update ECS Service
       if: steps.changes.outputs.src == 'true'
       run: |
-        aws ecs update-service --cluster ${{ env.ECS_CLUSTER }} --service velora-cart-service --force-new-deployment
+        aws ecs update-service --cluster ${{ env.ECS_CLUSTER }} --service velora-cart-service-prod --force-new-deployment
