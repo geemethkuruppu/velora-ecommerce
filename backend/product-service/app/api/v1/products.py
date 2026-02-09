@@ -41,53 +41,51 @@ class MediaUploadResponse(MessageResponse):
     url: str
 @router.post("/upload-media", response_model=MediaUploadResponse)
 async def upload_media(file: UploadFile = File(...), _=Depends(require_admin)):
-    """Upload a product media file to S3"""
-    allowed_types = ["image/jpeg", "image/png", "image/webp", "image/gif"]
-    if file.content_type not in allowed_types:
-        raise HTTPException(status_code=400, detail="Invalid file type. Only images are allowed.")
 
-    # Generate unique filename
+    allowed_types = ["image/jpeg", "image/png", "image/webp", "image/gif"]
+
+    if file.content_type not in allowed_types:
+        raise HTTPException(status_code=400, detail="Invalid file type")
+
     file_extension = os.path.splitext(file.filename)[1]
     unique_filename = f"products/{uuid.uuid4()}{file_extension}"
-    
-    # Initialize S3 client
-    s3_client = boto3.client('s3', region_name=settings.aws_region)
-    
-    try:
-        # Ensure file pointer is at the start
-        # Binary Integrity Check: Verify file signature
-        header = await file.read(4)
-        await file.seek(0)
-        
-        if not (header.startswith(b'\xff\xd8\xff') or # JPEG
-                header.startswith(b'\x89PNG') or     # PNG
-                header.startswith(b'GIF8') or        # GIF
-                header.startswith(b'RIFF')):        # WebP (RIFF container)
-            logger.error(f"Binary Integrity Check FAILED. Header: {header.hex()}")
-            raise HTTPException(
-                status_code=400,
-                detail="Invalid image file. Binary data appears corrupted or of an unsupported format."
-            )
-        logger.info(f"Binary Integrity Check PASSED. Header: {header.hex()}")
 
+    s3_client = boto3.client(
+        's3',
+        region_name=settings.aws_region
+    )
+
+    try:
+        # SAFE binary check
+        header = file.file.read(4)
         file.file.seek(0)
-        
-        # Upload to S3
+
+        valid = (
+            header.startswith(b'\xff\xd8\xff') or
+            header.startswith(b'\x89PNG') or
+            header.startswith(b'GIF8') or
+            header.startswith(b'RIFF')
+        )
+
+        if not valid:
+            raise HTTPException(400, "Corrupted image")
+
         s3_client.upload_fileobj(
             file.file,
             settings.s3_bucket_name,
             unique_filename,
             ExtraArgs={
-                'ContentType': file.content_type
+                "ContentType": file.content_type
             }
         )
-    except ClientError as e:
-        raise HTTPException(status_code=500, detail=f"S3 Upload failed: {str(e)}")
 
-    # Construct the public S3 URL
+    except Exception as e:
+        logger.error(str(e))
+        raise HTTPException(500, str(e))
+
     url = f"https://{settings.s3_bucket_name}.s3.{settings.aws_region}.amazonaws.com/{unique_filename}"
-    
-    return {"message": "File uploaded successfully", "url": url}
+
+    return {"message": "ok", "url": url}
 
 
 # Product General Endpoints
