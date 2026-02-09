@@ -27,7 +27,10 @@ app.add_middleware(CorrelationIdMiddleware)
 # Outermost Middleware: Standard CORS (Handles Pre-flight)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
+    allow_origins=[
+        "https://d2h62r2viksjq5.cloudfront.net",
+        "https://d2dnnb0ijn36mw.cloudfront.net",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
