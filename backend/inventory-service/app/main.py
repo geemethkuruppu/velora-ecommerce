@@ -34,23 +34,13 @@ app.add_middleware(
     expose_headers=["Set-Cookie", "Content-Disposition"]
 )
 
-# Custom Dynamic Logic (Mirrors Origin for CloudFront)
-from app.core.middleware import DynamicCORSMiddleware
-app.add_middleware(DynamicCORSMiddleware)
-
 # Security Headers (Applied after CORS)
 app.add_middleware(SecurityHeadersMiddleware)
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
 
-@app.options("/{rest_of_path:path}")
-async def preflight_handler(request: Request, rest_of_path: str):
-    """
-    Explicit OPTIONS handler to ensure preflight requests always succeed.
-    Middleware will handle actual header injection.
-    """
-    return Response(status_code=200)
+# Removed explicit preflight_handler to let CORSMiddleware handle it natively
 
 @app.get("/health")
 def health_check():
